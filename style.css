@@ -8,27 +8,27 @@ body {
     background-color: #111;
     color: #fff;
     margin: 0;
-    padding: 10px; /* パディングを少し減らす */
+    padding: 10px;
 }
 
-/* --- 【重要】レイアウトの強制横並びと縮小 --- */
+/* --- 【重要】レイアウトの強制横並びと幅の比率 (2:1) --- */
 #wrapper {
-    /* 盤面と情報パネルを強制的に横に並べる */
     display: flex;
-    flex-direction: row; /* ★ 縦画面でも横並びを強制 ★ */
-    gap: 5px; /* 隙間を減らす */
+    flex-direction: row; /* 横並びを強制 */
+    gap: 5px;
     background-color: #222;
     padding: 10px;
-    border-radius: 0;
     box-shadow: none;
-    max-width: 100%; /* 最大幅を画面いっぱいに */
+    max-width: 100%;
     margin: 0 auto;
+    width: 95%; /* 画面幅の95%を使用 */
+    min-width: 300px; /* 最小幅を設定 */
 }
 
-/* ぷよのセルサイズを縮小 */
+/* ぷよのセルサイズを縮小 (20pxを維持) */
 .puyo {
-    width: 20px; /* 30px -> 20px に縮小 */
-    height: 20px; /* 30px -> 20px に縮小 */
+    width: 20px; 
+    height: 20px; 
     border-radius: 50%;
     box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3), 0 1px 1px rgba(0,0,0,0.2); 
     display: inline-block; 
@@ -36,33 +36,35 @@ body {
     transition: transform 0.1s ease-out;
 }
 
-/* 盤面: 縮小されたぷよのサイズに合わせてグリッドと幅を再計算 */
+/* 盤面: 左側2/3を占めるように flex: 2 を設定 */
 #puyo-board {
     display: grid;
-    grid-template-rows: repeat(12, 20px); /* 30px -> 20px */
-    grid-template-columns: repeat(6, 20px); /* 30px -> 20px */
+    grid-template-rows: repeat(12, 20px); 
+    grid-template-columns: repeat(6, 20px); 
     border: 3px solid #666;
     background-color: #000;
     
     background-image: linear-gradient(to right, #1a1a1a 1px, transparent 1px),
                       linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
-    background-size: 20px 20px; /* 30px -> 20px */
+    background-size: 20px 20px; 
     background-position: -1px -1px; 
     
-    width: calc(20px * 6); /* 120px */
-    flex-shrink: 0; /* 縮小させない */
+    width: 120px; 
+    /* ★ 盤面: flex: 2 (全体の約 66%) と幅を固定し、縮小を許可しない ★ */
+    flex: 2 0 120px; 
+    min-width: 120px; /* 最小幅をぷよのサイズに合わせる */
     margin: 0;
 }
 
-/* --- 情報パネルのレイアウト調整 --- */
+/* --- 情報パネルのレイアウト調整 (右側1/3を占める) --- */
 
 #info-panel {
     display: flex;
-    flex-direction: column; /* 内部は縦並びに変更 */
-    gap: 5px; /* 隙間を減らす */
-    width: 100%; /* 残りのスペースを埋める */
-    max-width: 200px; /* 最大幅を設定して盤面とのバランスをとる */
-    flex-shrink: 1; /* 縮小を許可 */
+    flex-direction: column; 
+    gap: 5px; 
+    /* ★ 情報パネル: flex: 1 (全体の約 33%) を設定 ★ */
+    flex: 1 1 auto; 
+    min-width: 100px; /* 情報が入る最小幅を設定 */
 }
 
 .info-box {
@@ -71,49 +73,44 @@ body {
     background-color: #333; 
     border-radius: 0;
     text-align: center;
+    width: 100%; /* 親の info-panel の幅をフルに使用 */
 }
 .info-box h2 {
     margin: 0 0 3px 0;
-    font-size: 0.9em; /* フォントサイズを小さく */
+    font-size: 0.9em;
     color: #ccc;
 }
 #score, #chain-count {
-    font-size: 1.2em; /* フォントサイズを小さく */
+    font-size: 1.2em;
     font-weight: bold;
     color: #e63946;
 }
 
-/* 1. NEXT (info-group-a): ぷよのサイズも縮小 */
+/* 1. NEXT (info-group-a) */
 .info-group-a {
     flex-direction: column; 
-    flex-basis: auto; 
-    min-width: auto; 
     padding: 5px; 
 }
 
 /* NEXT内のぷよのサイズと配置 */
 #play-next-info .puyo {
-    width: 16px; /* 縮小 */
-    height: 16px; /* 縮小 */
-}
-#next-puyo-1, #next-puyo-2 {
-    display: flex;
-    justify-content: center;
-    gap: 2px;
-    margin: 3px 0;
+    width: 16px; 
+    height: 16px; 
 }
 
-/* 2. SCORE/CHAIN (info-group-b) */
+/* 2. SCORE/CHAIN (info-group-b) --- ★ 修正: 縦並びに変更 ★ */
 #play-stats-info {
     display: flex;
-    flex-direction: row; /* 横に並べてスペースを節約 */
+    flex-direction: column; /* ★ 縦並びに変更 ★ */
     gap: 5px;
     width: 100%;
 }
 #play-stats-info .info-box {
     padding: 3px;
     flex-grow: 1;
+    width: 100%;
 }
+
 
 /* 3. MODE/RESET (下段) */
 #controls-group-c {
@@ -125,13 +122,13 @@ body {
 }
 #mode-toggle-button, #reset-button {
     flex-grow: 1;
-    padding: 6px 5px; /* パディングを減らす */
+    padding: 6px 5px;
     background-color: #6a0dad; 
     color: white;
     border: none;
     border-radius: 5px;
     cursor: pointer;
-    font-size: 0.8em; /* フォントサイズを小さく */
+    font-size: 0.8em; 
     font-weight: bold;
     text-transform: uppercase; 
 }
@@ -156,7 +153,7 @@ body {
 /* --- ゴーストぷよのスタイル --- */
 .puyo-ghost {
     box-shadow: none !important;
-    border: 1px dashed #999; /* 枠線を細くする */
+    border: 1px dashed #999; 
     opacity: 0.5;
 }
 
@@ -209,7 +206,7 @@ body {
 }
 
 .mobile-btn {
-    width: 50px; /* ボタンも縮小 */
+    width: 50px; 
     height: 50px; 
     padding: 0;
     font-size: 1.2em; 
@@ -232,11 +229,14 @@ body {
         gap: 2px;
     }
     #puyo-board {
-        width: calc(18px * 6); /* さらにわずかに縮小 */
+        width: calc(18px * 6); 
         grid-template-columns: repeat(6, 18px);
+        flex: 2 0 108px; /* 18px * 6 = 108px */
+        min-width: 108px;
     }
     .puyo {
         width: 18px;
         height: 18px;
     }
+    /* ... 関連するすべてのサイズを調整 ... */
 }
