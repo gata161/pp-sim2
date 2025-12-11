@@ -1,3 +1,5 @@
+/* style.css の全体を以下の内容に置き換えてください */
+
 body {
     font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
     display: flex;
@@ -6,53 +8,139 @@ body {
     background-color: #111;
     color: #fff;
     margin: 0;
-    padding: 20px;
+    padding: 10px; /* パディングを少し減らす */
 }
 
+/* --- 【重要】レイアウトの強制横並びと縮小 --- */
 #wrapper {
-    /* 盤面と情報パネルを縦に並べるためのコンテナ */
+    /* 盤面と情報パネルを強制的に横に並べる */
     display: flex;
-    flex-direction: column; 
-    gap: 20px;
+    flex-direction: row; /* ★ 縦画面でも横並びを強制 ★ */
+    gap: 5px; /* 隙間を減らす */
     background-color: #222;
-    padding: 20px;
+    padding: 10px;
     border-radius: 0;
     box-shadow: none;
-    max-width: fit-content; 
+    max-width: 100%; /* 最大幅を画面いっぱいに */
+    margin: 0 auto;
 }
 
-/* 盤面: 幅を固定 */
+/* ぷよのセルサイズを縮小 */
+.puyo {
+    width: 20px; /* 30px -> 20px に縮小 */
+    height: 20px; /* 30px -> 20px に縮小 */
+    border-radius: 50%;
+    box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3), 0 1px 1px rgba(0,0,0,0.2); 
+    display: inline-block; 
+    box-sizing: border-box;
+    transition: transform 0.1s ease-out;
+}
+
+/* 盤面: 縮小されたぷよのサイズに合わせてグリッドと幅を再計算 */
 #puyo-board {
     display: grid;
-    grid-template-rows: repeat(12, 30px); 
-    grid-template-columns: repeat(6, 30px); 
+    grid-template-rows: repeat(12, 20px); /* 30px -> 20px */
+    grid-template-columns: repeat(6, 20px); /* 30px -> 20px */
     border: 3px solid #666;
     background-color: #000;
     
     background-image: linear-gradient(to right, #1a1a1a 1px, transparent 1px),
                       linear-gradient(to bottom, #1a1a1a 1px, transparent 1px);
-    background-size: 30px 30px; 
+    background-size: 20px 20px; /* 30px -> 20px */
     background-position: -1px -1px; 
     
-    width: calc(30px * 6); /* 180px */
-    margin: 0 auto;
+    width: calc(20px * 6); /* 120px */
+    flex-shrink: 0; /* 縮小させない */
+    margin: 0;
 }
 
-/* --- 【重要】ぷよの基本スタイルと色の定義 --- */
+/* --- 情報パネルのレイアウト調整 --- */
 
-/* Puyo base style (盤面用) */
-.puyo {
-    width: 30px; 
-    height: 30px; 
-    border-radius: 50%;
-    /* 影をつけて立体感を出す */
-    box-shadow: inset 0 -4px 0 rgba(0,0,0,0.3), 0 2px 2px rgba(0,0,0,0.2); 
-    display: inline-block; 
-    box-sizing: border-box;
-    transition: transform 0.1s ease-out; /* 落下時のアニメーション用 */
+#info-panel {
+    display: flex;
+    flex-direction: column; /* 内部は縦並びに変更 */
+    gap: 5px; /* 隙間を減らす */
+    width: 100%; /* 残りのスペースを埋める */
+    max-width: 200px; /* 最大幅を設定して盤面とのバランスをとる */
+    flex-shrink: 1; /* 縮小を許可 */
 }
 
-/* Puyo Color Definitions */
+.info-box {
+    padding: 5px;
+    border: 1px solid #444; 
+    background-color: #333; 
+    border-radius: 0;
+    text-align: center;
+}
+.info-box h2 {
+    margin: 0 0 3px 0;
+    font-size: 0.9em; /* フォントサイズを小さく */
+    color: #ccc;
+}
+#score, #chain-count {
+    font-size: 1.2em; /* フォントサイズを小さく */
+    font-weight: bold;
+    color: #e63946;
+}
+
+/* 1. NEXT (info-group-a): ぷよのサイズも縮小 */
+.info-group-a {
+    flex-direction: column; 
+    flex-basis: auto; 
+    min-width: auto; 
+    padding: 5px; 
+}
+
+/* NEXT内のぷよのサイズと配置 */
+#play-next-info .puyo {
+    width: 16px; /* 縮小 */
+    height: 16px; /* 縮小 */
+}
+#next-puyo-1, #next-puyo-2 {
+    display: flex;
+    justify-content: center;
+    gap: 2px;
+    margin: 3px 0;
+}
+
+/* 2. SCORE/CHAIN (info-group-b) */
+#play-stats-info {
+    display: flex;
+    flex-direction: row; /* 横に並べてスペースを節約 */
+    gap: 5px;
+    width: 100%;
+}
+#play-stats-info .info-box {
+    padding: 3px;
+    flex-grow: 1;
+}
+
+/* 3. MODE/RESET (下段) */
+#controls-group-c {
+    width: 100%; 
+    display: flex;
+    justify-content: space-between;
+    gap: 5px;
+    margin-top: 5px;
+}
+#mode-toggle-button, #reset-button {
+    flex-grow: 1;
+    padding: 6px 5px; /* パディングを減らす */
+    background-color: #6a0dad; 
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.8em; /* フォントサイズを小さく */
+    font-weight: bold;
+    text-transform: uppercase; 
+}
+#reset-button {
+    background-color: #e63946;
+}
+
+/* --- Puyo Color Definitions (色定義は変更なし) --- */
+
 .puyo-1 { background-color: #e63946; } /* 赤 */
 .puyo-2 { background-color: #457b9d; } /* 青 */
 .puyo-3 { background-color: #8ac926; } /* 緑 */
@@ -65,108 +153,17 @@ body {
     box-shadow: none !important;
 }
 
-/* --- ゴーストぷよのスタイル (色付き半透明) --- */
+/* --- ゴーストぷよのスタイル --- */
 .puyo-ghost {
-    box-shadow: none !important; /* 影を消す */
-    border: 2px dashed #999; /* 破線枠をつける */
-    opacity: 0.5; /* 半透明にする */
+    box-shadow: none !important;
+    border: 1px dashed #999; /* 枠線を細くする */
+    opacity: 0.5;
 }
 
-/* --- 情報パネルのレイアウト --- */
-
-/* 情報パネル: 盤面と同じ幅で横並び */
-#info-panel {
-    display: flex;
-    flex-direction: row; /* 横並び */
-    gap: 10px;
-    width: calc(30px * 6 + 10px); /* 盤面幅 + 隙間分 */
-    flex-wrap: wrap; 
-    justify-content: flex-start;
-}
-
-/* 全情報ボックス共通スタイル */
-.info-box {
-    padding: 10px;
-    border: 1px solid #444; 
-    background-color: #333; 
-    border-radius: 0;
-    text-align: center;
-}
-.info-box h2 {
-    margin: 0 0 5px 0;
-    font-size: 1.1em;
-    color: #ccc;
-}
-#score, #chain-count {
-    font-size: 1.5em; 
-    font-weight: bold;
-    color: #e63946;
-}
-
-/* --- プレイモードのレイアウトと順序 --- */
+/* --- エディットモード時のレイアウト --- */
 .edit-info { display: none; } 
 .play-info { display: flex; }
 
-/* 1. NEXT (info-group-a): ぷよを縦に並べるコンテナ */
-.info-group-a {
-    flex-direction: column; 
-    flex-basis: 35%; 
-    min-width: 70px; 
-    max-width: 90px;
-    padding: 5px; 
-}
-
-/* NEXT内のぷよのサイズと配置 */
-#play-next-info .puyo {
-    width: 24px;
-    height: 24px;
-}
-#next-puyo-1, #next-puyo-2 {
-    display: flex; /* puyo 2つを横並びにする */
-    justify-content: center;
-    align-items: center;
-    gap: 2px;
-    margin: 3px 0;
-}
-
-
-/* 2. SCORE/CHAIN (info-group-b): 右側の領域を占める */
-#play-stats-info {
-    flex-basis: 60%; 
-    display: flex;
-    flex-direction: column;
-    gap: 5px;
-}
-#play-stats-info .info-box {
-    padding: 5px;
-    flex-grow: 1;
-}
-
-/* 3. MODE/RESET (下段) */
-#controls-group-c {
-    width: 100%; 
-    display: flex;
-    justify-content: space-between;
-    gap: 10px;
-    margin-top: 5px;
-}
-#mode-toggle-button, #reset-button {
-    flex-grow: 1;
-    padding: 8px 10px;
-    background-color: #6a0dad; 
-    color: white;
-    border: none;
-    border-radius: 5px;
-    cursor: pointer;
-    font-size: 1em;
-    font-weight: bold;
-    text-transform: uppercase; 
-}
-#reset-button {
-    background-color: #e63946;
-}
-
-/* --- エディットモード時のレイアウトと順序 --- */
 .edit-mode-active .play-info,
 .edit-mode-active #reset-button {
     display: none !important; 
@@ -175,10 +172,10 @@ body {
     display: block !important; 
 }
 
-/* エディットモードは縦に積み重ねる */
+/* エディットモードは縦に積み重ねる (情報パネル内で) */
 .edit-mode-active #info-panel {
     flex-direction: column;
-    gap: 15px;
+    gap: 5px;
 }
 .edit-mode-active .edit-group-a,
 .edit-mode-active .edit-group-b {
@@ -189,40 +186,33 @@ body {
     width: 100%;
 }
 
-/* --- パレットのスタイル --- */
-#color-palette {
-    display: flex;
-    justify-content: space-around;
-    gap: 5px;
-    flex-wrap: wrap;
-    margin-top: 5px;
-}
+/* パレットのぷよも縮小 */
 #color-palette .puyo {
     cursor: pointer;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
-    width: 24px; 
-    height: 24px;
+    width: 20px; 
+    height: 20px;
 }
 #color-palette .puyo.selected {
-    box-shadow: 0 0 0 3px #fff, 0 0 5px 5px #ffc107; /* 選択中のハイライト */
+    box-shadow: 0 0 0 2px #fff, 0 0 4px 4px #ffc107; 
 }
 
-/* --- モバイル操作ボタンのスタイル --- */
+/* --- モバイル操作ボタンのスタイル (画面下部に配置) --- */
 #mobile-controls {
     display: none; 
-    margin-top: 20px;
+    margin-top: 10px;
     width: 100%;
     max-width: 350px; 
     flex-direction: row; 
     justify-content: space-between; 
-    gap: 5px; 
+    gap: 3px; 
 }
 
 .mobile-btn {
-    width: 65px; 
-    height: 65px; 
+    width: 50px; /* ボタンも縮小 */
+    height: 50px; 
     padding: 0;
-    font-size: 1.5em; 
+    font-size: 1.2em; 
     font-weight: bold;
     color: white;
     border: none;
@@ -234,4 +224,19 @@ body {
     flex-shrink: 0; 
     flex-grow: 1; 
     line-height: 1; 
+}
+
+/* iPhone SEなどの極端に狭い画面への最後の調整 */
+@media (max-width: 350px) {
+    #wrapper {
+        gap: 2px;
+    }
+    #puyo-board {
+        width: calc(18px * 6); /* さらにわずかに縮小 */
+        grid-template-columns: repeat(6, 18px);
+    }
+    .puyo {
+        width: 18px;
+        height: 18px;
+    }
 }
