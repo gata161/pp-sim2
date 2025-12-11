@@ -317,33 +317,73 @@ function getPuyoCoords() {
 }
 
 /**
- * ゴーストぷよ (落下予測位置) の座標と色を取得する
- * 修正箇所: 色情報を最終座標に追加
+ * 組ぷよが固定された後、ちぎりが発生した際の個々のぷよの最終落下位置を予測する
  */
-function getGhostCoords() {
+function getGhostFinalPositions() {
     if (!currentPuyo || gameState !== 'playing') return [];
-
-    let tempPuyo = { ...currentPuyo };
     
+    // 1. 仮の盤面を作成 (ディープコピー)
+    let tempBoard = board.map(row => [...row]);
+
+    // 2. 組ぷよの固定位置を決定
+    let tempPuyo = { ...currentPuyo };
     while (true) {
-        // 1つ下に移動を試みる
         let testPuyo = { ...tempPuyo, mainY: tempPuyo.mainY - 1 };
-        
         const testCoords = getCoordsFromState(testPuyo);
         
-        // 衝突したら、現在の tempPuyo の位置が最終的なゴースト位置
         if (checkCollision(testCoords)) {
-            const finalCoords = getCoordsFromState(tempPuyo);
-            
-            // 色情報を座標に追加
-            finalCoords[0].color = currentPuyo.mainColor;
-            finalCoords[1].color = currentPuyo.subColor;
-            
-            return finalCoords;
+            break; // 衝突する直前の位置が固定位置
         }
-        
-        tempPuyo.mainY -= 1; // 衝突しなければさらに下に移動
+        tempPuyo.mainY -= 1; 
     }
+    
+    // 固定位置の座標を取得
+    const fixedCoords = getCoordsFromState(tempPuyo);
+    const puyo1Color = tempPuyo.mainColor;
+    const puyo2Color = tempPuyo.subColor;
+    const puyoColors = [puyo1Color, puyo2Color];
+    
+    
+    // 3. 盤面に仮置き (元のぷよの色はそのまま使用)
+    fixedCoords.forEach(p => {
+        if (p.y >= 0 && p.y < HEIGHT) {
+            const color = (p.x === tempPuyo.mainX && p.y === tempPuyo.mainY) 
+                          ? puyo1Color 
+                          : puyo2Color;
+            
+            // 既存のぷよがないセルにのみ仮置き
+            if (tempBoard[p.y][p.x] === COLORS.EMPTY) {
+                tempBoard[p.y][p.x] = color;
+            }
+        }
+    });
+
+    // 4. 仮の重力処理（ちぎりシミュレーション）
+    simulateGravity(tempBoard); 
+
+    // 5. 最終的なゴースト座標の抽出
+    let ghostPositions = [];
+    let puyoCount = 0;
+    
+    for (let y = 0; y < HEIGHT; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+            const tempColor = tempBoard[y][x];
+            const originalColor = board[y][x];
+            
+            // tempBoardにあって、originalBoardにはなかったぷよ
+            // かつ、それが現在落下中の組ぷよの色である場合
+            if (originalColor === COLORS.EMPTY && puyoColors.includes(tempColor)) {
+                
+                // 既に抽出済みのぷよの数で、組ぷよの2つに制限する
+                if (puyoCount < 2) {
+                    ghostPositions.push({ x: x, y: y, color: tempColor });
+                    puyoCount++;
+                }
+            }
+        }
+    }
+
+    return ghostPositions;
 }
 
 
@@ -566,26 +606,36 @@ function calculateScore(groups, currentChain) {
     return totalScore;
 }
 
-function gravity() {
+/**
+ * 渡された盤面データに対して、ぷよの落下処理のみを実行する。
+ * (連鎖検出やスコア計算は行わない)
+ * @param {Array<Array<number>>} targetBoard - 重力処理を適用する盤面データ
+ */
+function simulateGravity(targetBoard) {
     for (let x = 0; x < WIDTH; x++) {
         let newColumn = [];
 
-        // 1. ぷよだけを抽出し、下に詰める
+        // 1. ぷよだけを抽出
         for (let y = 0; y < HEIGHT; y++) {
-            if (board[y][x] !== COLORS.EMPTY) {
-                newColumn.push(board[y][x]);
+            if (targetBoard[y][x] !== COLORS.EMPTY) {
+                newColumn.push(targetBoard[y][x]);
             }
         }
 
         // 2. 下から詰めたぷよを盤面に戻す（落下）
         for (let y = 0; y < HEIGHT; y++) {
             if (y < newColumn.length) {
-                board[y][x] = newColumn[y];
+                targetBoard[y][x] = newColumn[y];
             } else {
-                board[y][x] = COLORS.EMPTY; // 上部を空にする
+                targetBoard[y][x] = COLORS.EMPTY; // 上部を空にする
             }
         }
     }
+}
+
+
+function gravity() {
+    simulateGravity(board);
 }
 
 
@@ -593,16 +643,15 @@ function gravity() {
 
 /**
  * 盤面を描画し、落下中のぷよ、ゴーストぷよ、ネクストぷよを処理する
- * 修正箇所: ゴーストぷよの描画ロジックを修正
  */
 function renderBoard() {
     const boardElement = document.getElementById('puyo-board');
     boardElement.innerHTML = '';
     
-    // エディットモード中は落下中のぷよやゴーストを表示しない
     const isPlaying = gameState === 'playing';
     const currentPuyoCoords = isPlaying ? getPuyoCoords() : [];
-    const ghostPuyoCoords = isPlaying ? getGhostCoords() : []; 
+    // ★ 修正箇所: getGhostCoords を getGhostFinalPositions に変更 ★
+    const ghostPuyoCoords = isPlaying ? getGhostFinalPositions() : []; 
 
     // 描画は可視領域 (HEIGHT - 3 から 0) のみ
     for (let y = HEIGHT - 3; y >= 0; y--) { 
