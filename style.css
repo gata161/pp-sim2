@@ -56,15 +56,13 @@ body {
     /* 盤面全体の固定高さを計算: 12行 * 30px = 360px */
     height: calc(12 * var(--puyo-cell-size)); 
     
+    /* Flexbox設定: 成長比率3、縮小しない、基準幅は固定幅が優先 */
     flex: 3 0 auto; 
     min-width: calc(6 * var(--puyo-cell-size)); 
     margin: 0;
     
     max-width: 100%; 
     max-height: 90vh; 
-    
-    /* ★ 描画されているだけの余分な2列を隠す (6列固定の対策) ★ */
-    overflow: hidden !important; 
 }
 
 
@@ -196,9 +194,8 @@ body {
     text-transform: uppercase; 
 }
 
-/* ★ モード変更ボタンの色を紫系に (回転ボタンと交換) ★ */
 #mode-toggle-button {
-    background-color: #6a0dad; 
+    background-color: #457b9d; 
     color: white;
 }
 
@@ -285,7 +282,7 @@ body {
     border: none;
     border-radius: 8px;
     cursor: pointer;
-    background-color: #457b9d; /* 移動ボタンは青系を維持 */
+    background-color: #457b9d; 
     transition: background-color 0.1s;
     touch-action: manipulation;
     flex-shrink: 0; 
@@ -293,7 +290,7 @@ body {
     line-height: 1; 
 }
 
-/* ★ Bボタン（右回転）とAボタン（左回転）の色を青系に (モード変更ボタンと交換) ★ */
+/* Bボタン（右回転）とAボタン（左回転）のスタイル */
 #btn-rotate-cw, #btn-rotate-ccw {
-    background-color: #457b9d; 
+    background-color: #6a0dad; 
 }
