@@ -206,13 +206,13 @@ body {
     color: white;
 }
 
-/* ★ 変更点: 自動落下ON/OFFボタンのスタイル ★ */
+/* 自動落下ON/OFFボタンのスタイル */
 #auto-drop-toggle-button {
-    background-color: #2a9d8f; /* ON時の色 */
+    background-color: #2a9d8f; 
     color: white;
 }
 #auto-drop-toggle-button.disabled {
-    background-color: #555; /* OFF時の色 */
+    background-color: #555; 
     color: #bbb;
 }
 
@@ -253,16 +253,20 @@ body {
 }
 
 
-/* --- Puyo Color Definitions (色定義は変更なし) --- */
+/* --- Puyo Color Definitions (色定義) --- */
 
 .puyo-1 { background-color: #e63946; } 
 .puyo-2 { background-color: #457b9d; } 
 .puyo-3 { background-color: #8ac926; } 
 .puyo-4 { background-color: #fca311; } 
 .puyo-5 { background-color: #ccc; } 
+
+/* ★ 変更点: puyo-0 (消しゴム/透明) の見た目を強調 ★ */
 .puyo-0 { 
     background-color: transparent !important;
     box-shadow: none !important;
+    /* パレットで選択されていることがわかるように、枠線を追加 */
+    border: 2px dashed #666; 
 }
 
 /* --- ゴーストぷよのスタイル --- */
