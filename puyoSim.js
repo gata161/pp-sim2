@@ -307,10 +307,10 @@ function handleBoardClickEditMode(event) {
     const cellSize = rect.width / WIDTH; 
 
     let x = Math.floor((event.clientX - rect.left) / cellSize);
-    let y = Math.floor((rect.bottom - event.clientY) / cellSize);
-    
-    // DOMの描画順序 (Y=13が上、Y=0が下) を考慮してY座標を調整
-    y = HEIGHT - 1 - y;
+    let y_dom = Math.floor((event.clientY - rect.top) / cellSize); // DOMの上端からの行数 (0から13)
+
+    // ★ 修正済み: DOMのY座標 (上=0, 下=13) をデータ配列のY座標 (下=0, 上=13) に変換 ★
+    let y = HEIGHT - 1 - y_dom;
 
     // 盤面の全領域 (y=0 から y=13) 内かチェック
     if (x >= 0 && x < WIDTH && y >= 0 && y < HEIGHT) { 
@@ -358,7 +358,7 @@ function generateNewPuyo() {
         mainColor: c1,
         subColor: c2,
         mainX: 2, // 中央上
-        // 変更 D: メインぷよの初期Y座標を Y=12 (13列目) に設定 
+        // メインぷよの初期Y座標を Y=12 (13列目) に設定 
         mainY: HEIGHT - 2, // 14 - 2 = 12 
         rotation: 0 // 縦に並ぶ初期回転
     };
@@ -557,7 +557,7 @@ function lockPuyo() {
     let isGameOver = false;
 
     for (const puyo of coords) {
-        // 変更 E: 14列目 (Y=13, HEIGHT-1) に固定されたらゲームオーバー
+        // 14列目 (Y=13, HEIGHT-1) に固定されたらゲームオーバー
         if (puyo.y >= HEIGHT - 1) { 
             isGameOver = true;
             break;
@@ -734,8 +734,6 @@ function renderBoard() {
     // 描画は全領域 (y=13 から y=0) を行う
     for (let y = HEIGHT - 1; y >= 0; y--) { 
         for (let x = 0; x < WIDTH; x++) {
-            // DOMの描画順序 (Y=13が上、Y=0が下) に合わせるため、y_domを計算
-            const y_dom = HEIGHT - 1 - y; 
             const cellElement = document.getElementById(`cell-${x}-${y}`);
             if (!cellElement) continue;
 
