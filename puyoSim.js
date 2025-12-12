@@ -41,6 +41,8 @@ let editingNextPuyos = []; // エディットモードで編集中のネクス�
 // --- 落下ループのための変数 ---
 let dropInterval = 1000; // 1秒ごとに落下
 let dropTimer = null; 
+// ★ 変更点: 自動落下状態の管理 ★
+let autoDropEnabled = true; 
 
 
 // --- 初期化関数 ---
@@ -156,6 +158,14 @@ function initializeGame() {
 window.resetGame = function() { 
     clearInterval(dropTimer); 
     initializeGame();
+    // ★ 変更点: リセット後も自動落下状態を維持 ★
+    if (autoDropEnabled) {
+        // initializeGameの最後に startPuyoDropLoop() が呼ばれるため、ここでは特に再設定は不要
+    } else {
+        // リセットでONになってしまうのを防ぐため、明示的にOFFを呼び出す
+        window.toggleAutoDrop();
+        window.toggleAutoDrop(); // 2回呼び出しでONになり、その後OFFになる
+    }
 }
 
 /**
@@ -209,7 +219,8 @@ window.toggleMode = function() {
 
 function startPuyoDropLoop() {
     if (dropTimer) clearInterval(dropTimer);
-    if (gameState === 'playing') {
+    // ★ 変更点: autoDropEnabled が true の場合のみタイマーをセット ★
+    if (gameState === 'playing' && autoDropEnabled) { 
         dropTimer = setInterval(dropPuyo, dropInterval);
     }
 }
@@ -228,7 +239,34 @@ function dropPuyo() {
 }
 
 
-// --- エディットモード機能 (変更なし) ---
+// ★ 変更点: 自動落下ON/OFF切り替え関数 (グローバル公開) ★
+window.toggleAutoDrop = function() {
+    const button = document.getElementById('auto-drop-toggle-button');
+    if (!button) return;
+    
+    // 状態を反転
+    autoDropEnabled = !autoDropEnabled;
+
+    if (autoDropEnabled) {
+        // ONに戻す場合
+        button.textContent = '自動落下: ON';
+        button.classList.remove('disabled');
+        if (gameState === 'playing') {
+             // 落下中のぷよがなくても、ONになったらタイマーを再開
+            startPuyoDropLoop();
+        }
+    } else {
+        // OFFにする場合
+        button.textContent = '自動落下: OFF';
+        button.classList.add('disabled');
+        if (dropTimer) {
+            clearInterval(dropTimer);
+        }
+    }
+};
+
+
+// --- エディットモード機能 (省略) ---
 
 function setupEditModeListeners() {
     const palette = document.getElementById('color-palette');
@@ -797,6 +835,7 @@ function handleInput(event) {
             rotatePuyoCCW(); 
             break;
         case 'ArrowDown':
+            // ★ 変更点: 自動落下ON/OFFに関わらず、下キーで一時的に落下タイマーをリセットし、再度落下を試みる ★
             clearInterval(dropTimer);
             movePuyo(0, -1); 
             startPuyoDropLoop(); 
@@ -812,4 +851,9 @@ function handleInput(event) {
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
     window.addEventListener('resize', checkMobileControlsVisibility);
+    
+    // ★ 変更点: 初期ボタンの状態を正しく設定 ★
+    // initializeGame()でstartPuyoDropLoop()が呼ばれているため、一度OFFにしてONに戻すことでボタンの状態を設定
+    window.toggleAutoDrop(); 
+    window.toggleAutoDrop(); 
 });
