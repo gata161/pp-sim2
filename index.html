@@ -10,58 +10,59 @@
 
     <div id="wrapper">
         
-        <div id="left-column">
-            <div id="puyo-board" oncontextmenu="return false;">
-                </div>
+        <div id="puyo-board" oncontextmenu="return false;">
+            </div>
+        
+        <div id="info-panel">
             
-            <div id="info-panel">
-                
-                <div id="play-info-container" class="play-info">
-                    <div id="play-stats-info">
-                        <div class="info-box">
-                            <h2>SCORE</h2>
-                            <div id="score">0</div>
-                        </div>
-                        <div class="info-box">
-                            <h2>CHAIN</h2>
-                            <div id="chain-count">0</div>
-                        </div>
-                    </div>
-                    <div id="play-next-info" class="info-box info-group-a">
-                        <h2>NEXT</h2>
-                        <div class="next-puyo-row next-row-primary">
-                            <div id="next-puyo-1" class="next-puyo-slot"></div>
-                            <div id="next-puyo-2" class="next-puyo-slot"></div>
-                        </div>
-                    </div>
-                    <div id="play-controls">
-                        <button id="auto-drop-toggle-button" onclick="toggleAutoDrop()">自動落下: ON</button>
-                        <button id="reset-button-play" onclick="resetGame()">RESET GAME</button>
-                    </div>
-                </div>
-
-                <div id="edit-info-container" class="edit-info">
+            <div id="play-info-container" class="play-info">
+                <div id="play-stats-info">
                     <div class="info-box">
-                        <h2>パレット</h2>
-                        <div id="color-palette">
-                            <div class="puyo puyo-0 palette-color" data-color="0"></div> <div class="puyo puyo-1 palette-color" data-color="1"></div>
-                            <div class="puyo puyo-2 palette-color" data-color="2"></div>
-                            <div class="puyo puyo-3 palette-color" data-color="3"></div>
-                            <div class="puyo puyo-4 palette-color" data-color="4"></div>
-                            <div class="puyo puyo-5 palette-color" data-color="5"></div> </div>
+                        <h2>SCORE</h2>
+                        <div id="score">0</div>
                     </div>
-                    <div id="edit-controls">
-                        <button id="reset-button-edit" onclick="resetGame()">盤面クリア</button>
-                        <button onclick="applyNextPuyos()">ネクスト設定を保存</button>
+                    <div class="info-box">
+                        <h2>CHAIN</h2>
+                        <div id="chain-count">0</div>
                     </div>
                 </div>
-
-                <div id="mode-toggle-container">
-                    <button id="mode-toggle-button" onclick="toggleMode()">EDIT</button>
+                
+                <div id="play-next-info" class="info-box info-group-a">
+                    <h2>NEXT</h2>
+                    <div class="next-puyo-row next-row-primary">
+                        <div id="next-puyo-1" class="next-puyo-slot"></div>
+                        <div id="next-puyo-2" class="next-puyo-slot"></div>
+                    </div>
+                </div>
+                
+                <div id="play-controls">
+                    <button id="auto-drop-toggle-button" onclick="toggleAutoDrop()">自動落下: ON</button>
+                    <button id="reset-button-play" onclick="resetGame()">RESET GAME</button>
                 </div>
             </div>
-        </div>
 
+            <div id="edit-info-container" class="edit-info">
+                <div class="info-box">
+                    <h2>パレット</h2>
+                    <div id="color-palette">
+                        <div class="puyo puyo-0 palette-color" data-color="0"></div> <div class="puyo puyo-1 palette-color" data-color="1"></div>
+                        <div class="puyo puyo-2 palette-color" data-color="2"></div>
+                        <div class="puyo puyo-3 palette-color" data-color="3"></div>
+                        <div class="puyo puyo-4 palette-color" data-color="4"></div>
+                        <div class="puyo puyo-5 palette-color" data-color="5"></div> </div>
+                </div>
+                <div id="edit-controls">
+                    <button id="reset-button-edit" onclick="resetGame()">盤面クリア</button>
+                    <button onclick="applyNextPuyos()">ネクスト設定を保存</button>
+                </div>
+            </div>
+
+            <div id="mode-toggle-container">
+                <button id="mode-toggle-button" onclick="toggleMode()">EDIT</button>
+            </div>
+            
+        </div>
+        
         <div id="edit-next-panel" class="edit-info">
             <h2>NEXT 50 (クリックで色変更 / 横スクロール可能)</h2>
             <div id="edit-next-row-container">
