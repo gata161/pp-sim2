@@ -4,7 +4,7 @@ body {
     font-family: Arial, sans-serif;
     display: flex;
     justify-content: center;
-    align-items: flex-start; /* 画面上部に寄せる */
+    align-items: flex-start; 
     min-height: 100vh;
     background-color: #1a1a1a;
     color: #fff;
@@ -14,7 +14,7 @@ body {
 
 #wrapper {
     display: flex;
-    flex-direction: column; /* 全体を縦並びにする */
+    flex-direction: row; /* ★ 修正: 盤面と情報パネルを横並びに戻す ★ */
     gap: 15px;
     background-color: #222;
     padding: 15px;
@@ -25,14 +25,7 @@ body {
     align-items: flex-start;
 }
 
-/* 盤面と情報パネルを収める左側コンテナ (横並び) */
-#left-column {
-    display: flex;
-    flex-direction: row; 
-    gap: 15px;
-    width: 100%; 
-    justify-content: center;
-}
+/* ★ #left-column は削除 (index.html からも削除) ★ */
 
 
 /* --- 盤面 (Puyo Board) --- */
@@ -220,16 +213,24 @@ button.disabled {
 }
 
 
-/* --- 新規: エディットモード専用 ネクスト設定パネル (盤面の下) --- */
+/* --- 新規: エディットモード専用 ネクスト設定パネル (横スクロール) --- */
 
 #edit-next-panel {
-    width: 100%; /* wrapper の幅全体を使う */
+    /* #wrapper が横並びなので、縦長の情報パネルの下に縦に並ぶようにする */
+    position: absolute; 
+    top: 580px; /* 盤面の高さ(560px) + wrapper padding (15px) + gap(15px) 程度 */
+    left: 50%;
+    transform: translateX(-50%);
+    
+    width: 95%; /* 画面幅いっぱいに広げる */
+    max-width: 870px; /* #wrapper の max-width に合わせる */
+    
     padding: 10px;
     border: 1px solid #444; 
     background-color: #333; 
     border-radius: 5px; 
     box-sizing: border-box;
-    flex-shrink: 0;
+    z-index: 500; /* 手前に出す */
 }
 
 #edit-next-panel h2 {
@@ -322,16 +323,24 @@ button.disabled {
     margin: 0 5px;
 }
 
-/* 650px以下での盤面と情報パネルの表示調整 (必要に応じて) */
+/* 650px以下での表示調整 */
 @media (max-width: 650px) {
-    #left-column {
-        flex-direction: column; /* モバイルでは縦並びに戻す */
+    /* 盤面と情報パネルを縦並びに戻す */
+    #wrapper {
+        flex-direction: column; 
     }
     #info-panel {
-        height: auto; /* 高さを自動調整 */
+        height: auto; 
         max-width: 100%;
     }
     #puyo-board {
         margin: 0 auto;
+    }
+    
+    /* エディットパネルを通常の流れに戻す */
+    .edit-mode-active #edit-next-panel {
+        position: static;
+        transform: none;
+        max-width: 100%;
     }
 }
