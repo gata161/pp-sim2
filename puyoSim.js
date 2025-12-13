@@ -42,7 +42,7 @@ let editingNextPuyos = [];
 // --- 落下ループのための変数 ---
 let dropInterval = 1000; // 1秒ごとに落下
 let dropTimer = null; 
-let autoDropEnabled = false; // ★変更点: 初期状態で自動落下をOFF (false) に設定★
+let autoDropEnabled = false; 
 
 
 // --- 初期化関数 ---
@@ -115,7 +115,6 @@ function initializeGame() {
     // 自動落下ボタンの初期化
     const autoDropButton = document.getElementById('auto-drop-toggle-button');
     if (autoDropButton) {
-        // ★変更点: autoDropEnabledの初期値に合わせてボタン表示を更新★
         if (autoDropEnabled) {
             autoDropButton.textContent = '自動落下: ON';
             autoDropButton.classList.remove('disabled');
@@ -125,9 +124,11 @@ function initializeGame() {
         }
     }
 
+    // ★追加変更点: プレイモード開始時（リセット時）に一度重力を実行★
+    gravity(); 
+
     // 最初のぷよを生成
     generateNewPuyo(); 
-    // autoDropEnabled=false のため、タイマーはここでは開始されない
     startPuyoDropLoop(); 
     
     updateUI();
@@ -204,6 +205,9 @@ window.toggleMode = function() {
         // プレイモード復帰時にDOMを確実にリセット
         createBoardDOM(); 
         
+        // ★追加変更点: エディットモードからの復帰時に一度重力を実行★
+        gravity(); 
+
         currentPuyo = null; 
         generateNewPuyo(); 
         startPuyoDropLoop(); 
@@ -222,7 +226,7 @@ function startPuyoDropLoop() {
         dropTimer = setInterval(dropPuyo, dropInterval);
     }
 }
-
+// ... (その他の関数は変更なし) ...
 function dropPuyo() {
     if (gameState !== 'playing' || !currentPuyo) return;
 
@@ -699,6 +703,7 @@ function simulateGravity(targetBoard) {
 
 
 function gravity() {
+    // 盤面データに重力処理を適用する
     simulateGravity(board);
 }
 
@@ -706,6 +711,7 @@ function gravity() {
 // --- 描画とUI更新 ---
 
 function renderBoard() {
+// ... (中略) ... 描画ロジックは変更なし
     const isPlaying = gameState === 'playing';
     const currentPuyoCoords = isPlaying ? getPuyoCoords() : [];
     const ghostPuyoCoords = isPlaying ? getGhostFinalPositions() : []; 
@@ -729,7 +735,7 @@ function renderBoard() {
             } 
             // 2. ゴーストぷよ (操作中ぷよがなければ)
             else {
-                const puyoGhost = ghostPuyoCoords.find(p => p.x === x && p.y === y);
+                const puyoGhost = ghostPuyoCoords.find(p => p.x === x && puyo.y === y);
                 if (puyoGhost) {
                     cellColor = puyoGhost.color; 
                     puyoClasses = `puyo puyo-${cellColor} puyo-ghost`;
@@ -752,6 +758,7 @@ function renderBoard() {
  * プレイモードのネクスト描画 (メイン=下, サブ=上)
  */
 function renderPlayNextPuyo() {
+// ... (中略) ... 描画ロジックは変更なし
     const next1Element = document.getElementById('next-puyo-1');
     const next2Element = document.getElementById('next-puyo-2');
     
@@ -782,6 +789,7 @@ function renderPlayNextPuyo() {
  * エディットモードのネクスト描画 (メイン=下, サブ=上, タップイベント組み込み)
  */
 function renderEditNextPuyos() {
+// ... (中略) ... 描画ロジックは変更なし
     const slots = [document.getElementById('edit-next-1'), document.getElementById('edit-next-2')];
     
     const createPuyo = (color, listIndex, puyoIndex) => {
@@ -825,6 +833,7 @@ function updateUI() {
 // --- 入力処理 ---
 
 function handleInput(event) {
+// ... (中略) ... 入力処理は変更なし
     if (gameState !== 'playing') return; 
 
     switch (event.key) {
