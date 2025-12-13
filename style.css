@@ -31,19 +31,7 @@ body {
     align-items: flex-start;
 }
 
-/* 盤面とネクスト設定を縦にまとめるコンテナ */
-#board-and-next-container {
-    display: flex;
-    flex-direction: column; /* 縦に並べる */
-    gap: 10px;
-    flex: 0 0 240px; /* 盤面と同じ幅に固定 */
-    min-width: 240px;
-    /* 表示が隠れないようにvisibleを指定 */
-    overflow: visible; 
-}
-
-
-/* ぷよのセルサイズの基準を 40px に拡大 */
+/* 盤面の設定 (コンテナ削除によりシンプルに) */
 #puyo-board {
     --puyo-cell-size: 40px; 
     
@@ -62,7 +50,7 @@ body {
     width: 240px !important; 
     height: 560px; 
     
-    flex: 0 0 240px; 
+    flex: 0 0 240px; /* 幅固定 */
     min-width: 240px; 
     margin: 0;
     
@@ -128,7 +116,7 @@ body {
     gap: 10px;
     flex: 1;
     min-width: 150px;
-    max-width: 200px;
+    max-width: 200px; /* サイドバーの最大幅 */
 }
 
 #play-info-container, #edit-info-container {
@@ -147,6 +135,7 @@ body {
     text-align: center;
     width: 100%; 
     flex-shrink: 0; 
+    box-sizing: border-box; /* パディングを含める */
 }
 .info-box h2 {
     margin: 0 0 5px 0;
@@ -246,13 +235,16 @@ body {
 
 /* --- モードによる要素の表示/非表示 (基本制御) --- */
 
-/* edit-info はデフォルトで非表示 */
+/* edit-infoクラスがついた要素はデフォルトで非表示 */
 .edit-info { 
     display: none !important; 
     flex-grow: 0;
 } 
 
 /* エディットモード時のサイドバー内情報の表示 */
+/* HTMLで edit-info-container にこのクラスを付けているため、これだけで中身ごと表示される */
+body.edit-mode-active #edit-info-container.edit-info,
+#wrapper.edit-mode-active #edit-info-container.edit-info,
 .edit-mode-active #edit-info-container.edit-info { 
     display: flex !important; 
     flex-direction: column; 
@@ -266,13 +258,16 @@ body {
     flex-grow: 1;
     flex-direction: column; 
 } 
+/* エディットモードになったらプレイ情報は消す */
+body.edit-mode-active .play-info,
+#wrapper.edit-mode-active .play-info,
 .edit-mode-active .play-info {
     display: none !important; 
     flex-grow: 0;
 }
 
 
-/* --- ★★★ モード変更ボタンの表示制御 ★★★ --- */
+/* --- モード変更ボタンの表示制御 --- */
 
 /* 1. プレイモード時: editボタン(プレイ用)を表示、playボタン(エディット用)を隠す */
 #mode-toggle-container {
@@ -283,7 +278,6 @@ body {
 }
 
 /* 2. エディットモード時: editボタン(プレイ用)を隠す、playボタン(エディット用)を表示 */
-/* クラスがwrapperについてもbodyについても反応するように記述 */
 body.edit-mode-active #mode-toggle-container,
 #wrapper.edit-mode-active #mode-toggle-container,
 .edit-mode-active #mode-toggle-container {
@@ -294,28 +288,6 @@ body.edit-mode-active #mode-toggle-button-play-only,
 #wrapper.edit-mode-active #mode-toggle-button-play-only,
 .edit-mode-active #mode-toggle-button-play-only {
     display: none; 
-}
-
-
-/* --- ★★★ 盤面下ネクスト設定の強制表示設定 (修正の核心) ★★★ --- */
-
-/* 1. 通常時は絶対に隠す (display:none !important) */
-#edit-next-info {
-    display: none !important;
-}
-
-/* 2. エディットモード時は、どんな親クラスの状態でも強制的に表示する */
-/* bodyにクラスがつく場合とwrapperにクラスがつく場合の両方を網羅 */
-body.edit-mode-active #edit-next-info,
-#wrapper.edit-mode-active #edit-next-info,
-.edit-mode-active #edit-next-info {
-    display: flex !important;
-    flex-direction: column !important;
-    visibility: visible !important;
-    opacity: 1 !important;
-    height: auto !important;
-    width: 100% !important;
-    margin-top: 10px;
 }
 
 
