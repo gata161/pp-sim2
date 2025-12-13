@@ -7,7 +7,7 @@ const WIDTH = 6;
 const HEIGHT = 14; // 可視領域12 + 隠し領域2 (Y=0 から Y=13)
 const VISIBLE_HEIGHT = 12; // 可視領域の高さ (Y=0 から Y=11)
 const TOP_HIDDEN_ROW = HEIGHT - 1; // Y=13 (最上段、隠し領域の上端)
-const START_Y = HEIGHT - 2; // ★修正: Y=12 からスタート
+const START_Y = HEIGHT - 2; // ★修正済み: Y=12 からスタート
 const NUM_NEXT_PUYOS = 2; // NEXT 1 と NEXT 2 の 2組
 const NEXT_MAX_COUNT = 50; 
 
@@ -43,7 +43,7 @@ let editingNextPuyos = [];
 // --- 落下ループのための変数 ---
 let dropInterval = 1000; 
 let dropTimer = null; 
-let autoDropEnabled = false; // ★修正: 初期設定はOFF
+let autoDropEnabled = false; // ★修正済み: 初期設定はOFF
 
 
 // --- 初期化関数 ---
@@ -745,7 +745,7 @@ function renderBoard() {
             else if (cellColor === COLORS.EMPTY) { 
                 const puyoGhost = ghostPuyoCoords.find(p => p.x === x && p.y === y);
                 if (puyoGhost) {
-                    // 色情報を使用してゴーストクラスを設定
+                    // ★ 色情報を使用してゴーストクラスを設定
                     cellColor = puyoGhost.color; 
                     puyoClasses = `puyo puyo-${puyoGhost.color} puyo-ghost`;
                 }
@@ -811,12 +811,12 @@ function handleInput(event) {
             break;
         case 'z': 
         case 'Z':
-            // ★修正: ZキーはCW (時計回り)
+            // ★ Zキー (Aボタン相当) で時計回り (CW) に回転
             rotatePuyoCW(); 
             break;
         case 'x': 
         case 'X':
-            // ★修正: XキーはCCW (反時計回り)
+            // ★ Xキー (Bボタン相当) で反時計回り (CCW) に回転
             rotatePuyoCCW(); 
             break;
         case 'ArrowDown':
