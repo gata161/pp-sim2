@@ -722,6 +722,7 @@ function renderBoard() {
     const isPlaying = gameState === 'playing' && currentPuyo;
     const currentPuyoCoords = isPlaying ? getPuyoCoords() : [];
     
+    // ★ ゴーストぷよの座標と色を計算
     const ghostPuyoCoords = isPlaying ? getGhostFinalPositions() : []; 
 
     for (let y = HEIGHT - 1; y >= 0; y--) { 
@@ -744,7 +745,7 @@ function renderBoard() {
             else if (cellColor === COLORS.EMPTY) { 
                 const puyoGhost = ghostPuyoCoords.find(p => p.x === x && p.y === y);
                 if (puyoGhost) {
-                    // 色情報を使用してゴーストクラスを設定
+                    // ★ 色情報を使用してゴーストクラスを設定
                     cellColor = puyoGhost.color; 
                     puyoClasses = `puyo puyo-${puyoGhost.color} puyo-ghost`;
                 }
@@ -810,13 +811,13 @@ function handleInput(event) {
             break;
         case 'z': 
         case 'Z':
-            // ★ Aボタン (Zキー) で反時計回り (CCW)
-            rotatePuyoCCW(); 
+            // ★ Zキー (Aボタン) で時計回り (CW) に再設定
+            rotatePuyoCW(); 
             break;
         case 'x': 
         case 'X':
-            // ★ Bボタン (Xキー) で時計回り (CW)
-            rotatePuyoCW(); 
+            // ★ Xキー (Bボタン) で反時計回り (CCW) に再設定
+            rotatePuyoCCW(); 
             break;
         case 'ArrowDown':
             if (dropTimer) clearInterval(dropTimer); 
