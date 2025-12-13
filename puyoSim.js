@@ -42,7 +42,7 @@ let editingNextPuyos = [];
 // --- 落下ループのための変数 ---
 let dropInterval = 1000; // 1秒ごとに落下
 let dropTimer = null; 
-let autoDropEnabled = false; // 初期状態で自動落下OFF
+let autoDropEnabled = false; 
 
 
 // --- 初期化関数 ---
@@ -52,7 +52,7 @@ let autoDropEnabled = false; // 初期状態で自動落下OFF
  */
 function createBoardDOM() {
     const boardElement = document.getElementById('puyo-board');
-    // ★重要修正: DOMが既に存在する場合は再生成しない★
+    // DOMが既に存在する場合は再生成しない (★安定動作のための必須修正★)
     if (boardElement.children.length > 0) return; 
     
     boardElement.innerHTML = ''; 
@@ -91,8 +91,6 @@ function checkMobileControlsVisibility() {
 
 
 function initializeGame() {
-    // 盤面DOMの生成はDOMContentLoaded内で行われるため、ここではデータリセットとゲーム初期化を行う。
-    
     // 盤面データを空で初期化
     for (let y = 0; y < HEIGHT; y++) {
         board[y] = Array(WIDTH).fill(COLORS.EMPTY);
@@ -126,8 +124,7 @@ function initializeGame() {
         }
     }
 
-    // ★追加: プレイモード開始時（リセット時）に一度重力を実行★
-    gravity(); 
+    // ★重力処理の呼び出しを削除 (安定版に戻す)★
 
     // 最初のぷよを生成
     generateNewPuyo(); 
@@ -165,7 +162,6 @@ function initializeGame() {
  */
 window.resetGame = function() { 
     clearInterval(dropTimer); 
-    // ★修正: DOM再構築を伴わない initializeGame を呼び出す★
     initializeGame();
 }
 
@@ -205,11 +201,8 @@ window.toggleMode = function() {
 
         boardElement.removeEventListener('click', handleBoardClickEditMode);
         
-        // ★修正: DOM再構築 (createBoardDOM) を削除し、データに対する重力と再描画を行う★
-        
-        // 重力を実行してエディットで配置されたぷよを落下させる
-        gravity(); 
-        renderBoard();
+        // ★重力処理の呼び出しを削除 (安定版に戻す)★
+        // renderBoard() は generateNewPuyo() 実行後に操作ぷよを描画する
         
         currentPuyo = null; 
         generateNewPuyo(); 
@@ -229,8 +222,6 @@ function startPuyoDropLoop() {
         dropTimer = setInterval(dropPuyo, dropInterval);
     }
 }
-
-// ... (以下の関数は変更なし) ...
 
 function dropPuyo() {
     if (gameState !== 'playing' || !currentPuyo) return;
@@ -869,8 +860,8 @@ function handleInput(event) {
 
 // ゲーム開始
 document.addEventListener('DOMContentLoaded', () => {
-    // ★修正: DOMの再構築を防ぐため、DOMContentLoaded時に一度だけDOMを作成する★
-    createBoardDOM();
+    // DOMはここで一度だけ作成 (★安定動作のための必須修正★)
+    createBoardDOM(); 
     
     initializeGame();
     window.addEventListener('resize', checkMobileControlsVisibility);
