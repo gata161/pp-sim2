@@ -31,7 +31,7 @@ body {
     align-items: flex-start;
 }
 
-/* 盤面の設定 (コンテナ削除によりシンプルに) */
+/* 盤面の設定 */
 #puyo-board {
     --puyo-cell-size: 40px; 
     
@@ -135,7 +135,7 @@ body {
     text-align: center;
     width: 100%; 
     flex-shrink: 0; 
-    box-sizing: border-box; /* パディングを含める */
+    box-sizing: border-box; 
 }
 .info-box h2 {
     margin: 0 0 5px 0;
@@ -149,11 +149,6 @@ body {
 }
 
 /* NEXT ぷよ */
-.info-group-a {
-    flex-direction: column; 
-    padding: 10px; 
-}
-
 .next-puyo-row {
     display: flex; 
     justify-content: center;
@@ -233,7 +228,7 @@ body {
     color: #bbb;
 }
 
-/* --- モードによる要素の表示/非表示 (基本制御) --- */
+/* --- モードによる要素の表示/非表示 --- */
 
 /* edit-infoクラスがついた要素はデフォルトで非表示 */
 .edit-info { 
@@ -242,7 +237,6 @@ body {
 } 
 
 /* エディットモード時のサイドバー内情報の表示 */
-/* HTMLで edit-info-container にこのクラスを付けているため、これだけで中身ごと表示される */
 body.edit-mode-active #edit-info-container.edit-info,
 #wrapper.edit-mode-active #edit-info-container.edit-info,
 .edit-mode-active #edit-info-container.edit-info { 
@@ -266,10 +260,7 @@ body.edit-mode-active .play-info,
     flex-grow: 0;
 }
 
-
 /* --- モード変更ボタンの表示制御 --- */
-
-/* 1. プレイモード時: editボタン(プレイ用)を表示、playボタン(エディット用)を隠す */
 #mode-toggle-container {
     display: none; 
 }
@@ -277,7 +268,6 @@ body.edit-mode-active .play-info,
     display: block; 
 }
 
-/* 2. エディットモード時: editボタン(プレイ用)を隠す、playボタン(エディット用)を表示 */
 body.edit-mode-active #mode-toggle-container,
 #wrapper.edit-mode-active #mode-toggle-container,
 .edit-mode-active #mode-toggle-container {
@@ -288,6 +278,51 @@ body.edit-mode-active #mode-toggle-button-play-only,
 #wrapper.edit-mode-active #mode-toggle-button-play-only,
 .edit-mode-active #mode-toggle-button-play-only {
     display: none; 
+}
+
+
+/* --- ★ネクスト設定 (50手先) 用の追加CSS★ --- */
+
+#edit-next-list-container {
+    /* スクロールを有効にする */
+    max-height: 250px; 
+    overflow-y: scroll;
+    padding-right: 5px; /* スクロールバーのためのスペース */
+    margin-top: 10px;
+    text-align: left; /* リスト番号を左寄せにするため */
+}
+
+.next-puyo-slot-pair {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 3px 0;
+    border-bottom: 1px dashed #444;
+}
+
+.next-puyo-slot-pair:last-child {
+    border-bottom: none;
+}
+
+.next-puyo-slot-pair span {
+    font-size: 0.9em;
+    width: 20px;
+    text-align: right;
+    color: #ccc;
+    flex-shrink: 0;
+}
+
+/* リスト内のぷよ行を調整 */
+.next-puyo-slot-pair .next-puyo-row {
+    margin: 0; 
+    gap: 8px; 
+    justify-content: flex-start; /* 左寄せ */
+    flex-grow: 1;
+    padding-left: 10px;
+}
+/* リスト内のぷよはクリック可能にする */
+.next-puyo-slot-pair .puyo {
+    cursor: pointer;
 }
 
 
