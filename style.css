@@ -15,7 +15,7 @@ body {
     padding: 10px;
 }
 
-/* --- 【重要】レイアウトの強制横並びと幅の比率 (3:1) --- */
+/* --- レイアウトの強制横並び --- */
 #wrapper {
     display: flex;
     flex-direction: row; 
@@ -31,13 +31,15 @@ body {
     align-items: flex-start;
 }
 
-/* ★修正: 盤面とネクスト設定を縦にまとめるコンテナ ★ */
+/* 盤面とネクスト設定を縦にまとめるコンテナ */
 #board-and-next-container {
     display: flex;
     flex-direction: column; /* 縦に並べる */
     gap: 10px;
     flex: 0 0 240px; /* 盤面と同じ幅に固定 */
     min-width: 240px;
+    /* 表示が隠れないようにvisibleを指定 */
+    overflow: visible; 
 }
 
 
@@ -69,16 +71,16 @@ body {
     position: relative; 
 }
 
-/* --- 隠し領域の視覚化 (13列目と14列目) --- */
-#puyo-board > div:nth-child(-n+6), /* 14列目 (1-6番目のセル) */
-#puyo-board > div:nth-child(n+7):nth-child(-n+12) /* 13列目 (7-12番目のセル) */
+/* --- 隠し領域の視覚化 --- */
+#puyo-board > div:nth-child(-n+6), 
+#puyo-board > div:nth-child(n+7):nth-child(-n+12) 
 {
     opacity: 0.5;
     background-color: rgba(50, 50, 50, 0.5); 
     border-bottom: 1px solid rgba(255, 0, 0, 0.5); 
 }
 
-/* --- 赤いバツ印の設置 (ゲームオーバーライン) --- */
+/* --- 赤いバツ印の設置 --- */
 #puyo-board > div:nth-child(15) {
     position: relative;
     opacity: 1 !important; 
@@ -100,7 +102,7 @@ body {
 }
 
 
-/* --- ぷよのセルサイズ (盤面内) --- */
+/* --- ぷよのスタイル --- */
 .puyo {
     border-radius: 50%;
     box-shadow: inset 0 -3px 0 rgba(0,0,0,0.3), 0 1px 1px rgba(0,0,0,0.2); 
@@ -129,7 +131,6 @@ body {
     max-width: 200px;
 }
 
-/* プレイモード情報とエディットモード情報コンテナのスタイル */
 #play-info-container, #edit-info-container {
     display: flex;
     flex-direction: column;
@@ -158,7 +159,7 @@ body {
     color: #e63946;
 }
 
-/* 1. NEXT ぷよの横並び設定 */
+/* NEXT ぷよ */
 .info-group-a {
     flex-direction: column; 
     padding: 10px; 
@@ -178,14 +179,13 @@ body {
     align-items: center;
 }
 
-/* NEXT内のぷよのサイズ */
 #play-next-info .puyo, 
 #edit-next-info .puyo {
     width: 30px; 
     height: 30px; 
 }
 
-/* 2. SCORE/CHAIN */
+/* SCORE/CHAIN */
 #play-stats-info {
     display: flex;
     flex-direction: column; 
@@ -200,7 +200,7 @@ body {
 }
 
 
-/* --- 3. コントロールボタンのレイアウト --- */
+/* --- コントロールボタン --- */
 #play-controls, 
 #edit-action-buttons { 
     width: 100%; 
@@ -210,7 +210,6 @@ body {
     flex-shrink: 0;
 }
 
-/* モード切り替えとリセットボタンのスタイル共通 */
 #mode-toggle-container button, 
 #reset-button-container button,
 #reset-button-play, 
@@ -226,19 +225,16 @@ body {
     text-transform: uppercase; 
 }
 
-/* モード切り替えボタンの色 (両方のIDに適用) */
 #mode-toggle-button, #mode-toggle-button-play-only {
     background-color: #457b9d; 
     color: white;
 }
 
-/* リセットボタンの色 */
 #reset-button-play, #reset-button-edit {
     background-color: #e63946;
     color: white;
 }
 
-/* 自動落下ON/OFFボタンのスタイル */
 #auto-drop-toggle-button {
     background-color: #2a9d8f; 
     color: white;
@@ -248,15 +244,15 @@ body {
     color: #bbb;
 }
 
-/* --- モードによる要素の表示/非表示 --- */
+/* --- モードによる要素の表示/非表示 (基本制御) --- */
 
-/* 1. edit-infoクラスのデフォルト非表示 */
+/* edit-info はデフォルトで非表示 */
 .edit-info { 
     display: none !important; 
     flex-grow: 0;
 } 
 
-/* 2. edit-mode-active時の #edit-info-container の表示 (情報パネル側) */
+/* エディットモード時のサイドバー内情報の表示 */
 .edit-mode-active #edit-info-container.edit-info { 
     display: flex !important; 
     flex-direction: column; 
@@ -264,21 +260,7 @@ body {
     flex-grow: 1; 
 }
 
-/* ★★★最重要修正箇所★★★ */
-
-/* 1. プレイモード/通常時に #edit-next-info を確実に非表示にする */
-#board-and-next-container #edit-next-info {
-    display: none !important; 
-}
-
-/* 2. エディットモード時 (.edit-mode-active) に #edit-next-info を確実に表示する (盤面下側) */
-/* これで display: none !important; を上書きします。 */
-#wrapper.edit-mode-active #board-and-next-container #edit-next-info {
-    display: flex !important; 
-    flex-direction: column;
-}
-
-/* プレイモード情報コンテナの表示設定は維持 */
+/* プレイモード情報の表示制御 */
 .play-info { 
     display: flex; 
     flex-grow: 1;
@@ -289,9 +271,10 @@ body {
     flex-grow: 0;
 }
 
-/* ★モード変更ボタンの表示制御★ */
 
-/* プレイモード時: エディット用ボタンを隠し、プレイ用ボタンを表示 */
+/* --- ★★★ モード変更ボタンの表示制御 ★★★ --- */
+
+/* 1. プレイモード時: editボタン(プレイ用)を表示、playボタン(エディット用)を隠す */
 #mode-toggle-container {
     display: none; 
 }
@@ -299,17 +282,44 @@ body {
     display: block; 
 }
 
-
-/* エディットモード時: プレイ用ボタンを隠し、エディット用ボタンを表示 */
+/* 2. エディットモード時: editボタン(プレイ用)を隠す、playボタン(エディット用)を表示 */
+/* クラスがwrapperについてもbodyについても反応するように記述 */
+body.edit-mode-active #mode-toggle-container,
+#wrapper.edit-mode-active #mode-toggle-container,
 .edit-mode-active #mode-toggle-container {
     display: block; 
 }
+
+body.edit-mode-active #mode-toggle-button-play-only,
+#wrapper.edit-mode-active #mode-toggle-button-play-only,
 .edit-mode-active #mode-toggle-button-play-only {
     display: none; 
 }
 
 
-/* パレットのぷよも調整 */
+/* --- ★★★ 盤面下ネクスト設定の強制表示設定 (修正の核心) ★★★ --- */
+
+/* 1. 通常時は絶対に隠す (display:none !important) */
+#edit-next-info {
+    display: none !important;
+}
+
+/* 2. エディットモード時は、どんな親クラスの状態でも強制的に表示する */
+/* bodyにクラスがつく場合とwrapperにクラスがつく場合の両方を網羅 */
+body.edit-mode-active #edit-next-info,
+#wrapper.edit-mode-active #edit-next-info,
+.edit-mode-active #edit-next-info {
+    display: flex !important;
+    flex-direction: column !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    height: auto !important;
+    width: 100% !important;
+    margin-top: 10px;
+}
+
+
+/* --- パレット調整 --- */
 #color-palette {
     flex-grow: 1; 
 }
@@ -324,7 +334,7 @@ body {
 }
 
 
-/* --- Puyo Color Definitions (色定義) --- */
+/* --- 色定義 --- */
 .puyo-1 { background-color: #e63946; } 
 .puyo-2 { background-color: #457b9d; } 
 .puyo-3 { background-color: #8ac926; } 
@@ -337,7 +347,6 @@ body {
     border: 2px dashed #666; 
 }
 
-/* --- ゴーストぷよのスタイル --- */
 .puyo-ghost {
     box-shadow: none !important;
     border: 1px dashed #999; 
@@ -373,7 +382,6 @@ body {
     line-height: 1; 
 }
 
-/* Bボタン（右回転）とAボタン（左回転）のスタイル */
 #btn-rotate-cw, #btn-rotate-ccw {
     background-color: #6a0dad; 
 }
