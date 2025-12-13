@@ -199,13 +199,12 @@ window.toggleMode = function() {
 
         boardElement.removeEventListener('click', handleBoardClickEditMode);
         
-        // ★修正１：DOM再構築を削除★
-        // createBoardDOM(); 
+        // ★修正点１：DOM再構築 (createBoardDOM) を削除し、既存DOMを再利用する★
         
-        // ★修正２：エディットモードで配置した浮きぷよを重力で落とす★
+        // ★修正点２：エディットモードで配置した浮きぷよを重力で落として安定させる★
         gravity(); 
         
-        // ★修正３：エディットモードのネクスト設定をプレイモードに適用★
+        // ★修正点３：エディットモードのネクスト設定をプレイモードに適用★
         nextPuyoColors = JSON.parse(JSON.stringify(editingNextPuyos));
         
         currentPuyo = null; 
