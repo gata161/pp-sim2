@@ -324,7 +324,7 @@ body {
 #mobile-controls {
     display: none; 
     margin-top: 10px;
-    /* ★修正箇所: 下に15pxのマージンを追加して少し上に持ち上げる★ */
+    /* モバイルボタン位置調整を維持 */
     margin-bottom: 15px; 
     width: 100%;
     max-width: 400px; 
