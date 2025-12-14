@@ -5,7 +5,9 @@
 // 盤面サイズ
 const WIDTH = 6;
 const HEIGHT = 14; // 可視領域12 + 隠し領域2 (Y=0 から Y=13)
-const NUM_NEXT_PUYOS = 2; // NEXT 1 と NEXT 2 の 2組
+// ★修正: NEXT ぷよの最大数を 50 組に変更
+const MAX_NEXT_PUYOS = 50; 
+const NUM_VISIBLE_NEXT_PUYOS = 2; // プレイ画面に表示する NEXT の数 (NEXT 1とNEXT 2)
 
 // ぷよの色定義
 const COLORS = {
@@ -32,12 +34,13 @@ const BONUS_TABLE = {
 
 let board = []; 
 let currentPuyo = null; 
-let nextPuyoColors = []; // [ [c1, c2], [c3, c4] ] の形式でNEXT 2組を保持
+let nextPuyoColors = []; // [ [c1, c2], [c3, c4], ... ] の形式でNEXT 50組を保持
 let score = 0;
 let chainCount = 0;
 let gameState = 'playing'; // 'playing', 'chaining', 'gameover', 'editing'
 let currentEditColor = COLORS.EMPTY; // エディットモードで選択中の色 (デフォルトは消しゴム: 0)
-let editingNextPuyos = []; 
+let editingNextPuyos = []; // エディットモードで使用するNEXT 50組
+
 
 // --- 落下ループのための変数 ---
 let dropInterval = 1000; // 1秒ごとに落下
@@ -80,7 +83,6 @@ function checkMobileControlsVisibility() {
 
     // プレイモードかつ画面幅が650px以下の場合に表示
     if (gameState === 'playing' && window.innerWidth <= 650) {
-        // ★修正: style.displayの直接操作ではなく、CSSクラスの切り替えに変更
         mobileControls.classList.add('visible');
         document.body.classList.remove('edit-mode-active');
     } else if (gameState === 'editing') {
@@ -106,8 +108,11 @@ function initializeGame() {
     chainCount = 0;
     gameState = 'playing';
 
-    // ネクストぷよリストを完全にランダムなぷよで初期化
-    nextPuyoColors = [getRandomPair(), getRandomPair()];
+    // ★修正: ネクストぷよリストを MAX_NEXT_PUYOS (50組) で初期化
+    nextPuyoColors = [];
+    for (let i = 0; i < MAX_NEXT_PUYOS; i++) {
+        nextPuyoColors.push(getRandomPair());
+    }
     // エディット用のネクストリストも初期化
     editingNextPuyos = JSON.parse(JSON.stringify(nextPuyoColors));
     currentEditColor = COLORS.EMPTY; // エディットモードの初期色をリセット
@@ -207,10 +212,10 @@ window.toggleMode = function() {
 
         boardElement.removeEventListener('click', handleBoardClickEditMode);
         
-        // 修正済み：エディットモードで配置した浮きぷよを重力で落として安定させる
+        // エディットモードで配置した浮きぷよを重力で落として安定させる
         gravity(); 
         
-        // 修正済み：エディットモードのネクスト設定をプレイモードに適用
+        // エディットモードのネクスト設定をプレイモードに適用
         nextPuyoColors = JSON.parse(JSON.stringify(editingNextPuyos));
         
         currentPuyo = null; 
@@ -333,6 +338,21 @@ window.applyNextPuyos = function() {
     }
 }
 
+/**
+ * ネクストぷよリストをランダムで再生成する (グローバル公開)
+ */
+window.clearEditNext = function() {
+    if (gameState !== 'editing') return;
+    
+    // 50組をランダムなぷよで初期化
+    editingNextPuyos = [];
+    for (let i = 0; i < MAX_NEXT_PUYOS; i++) {
+        editingNextPuyos.push(getRandomPair());
+    }
+    renderEditNextPuyos(); 
+    alert('ネクストぷよリストをランダムで再生成しました。');
+}
+
 
 // --- ぷよの生成と操作 (プレイモード時のみ有効) ---
 
@@ -348,8 +368,8 @@ function getRandomPair() {
 function generateNewPuyo() {
     if (gameState !== 'playing') return;
 
-    // ネクストリストが足りない場合、ランダムに補充
-    while (nextPuyoColors.length < NUM_NEXT_PUYOS) {
+    // ネクストリストが MAX_NEXT_PUYOS (50組) 未満の場合、補充
+    while (nextPuyoColors.length < MAX_NEXT_PUYOS) {
         nextPuyoColors.push(getRandomPair());
     }
     
@@ -360,9 +380,8 @@ function generateNewPuyo() {
         mainColor: c1,
         subColor: c2,
         mainX: 2, 
-        // メインぷよの初期Y座標を Y=12 (隠し領域の1列目) に設定 
         mainY: HEIGHT - 2, // 14 - 2 = 12 
-        rotation: 0 // 縦に並ぶ初期回転 (サブぷよがメインぷよの上に乗る状態)
+        rotation: 0 // 縦に並ぶ初期回転
     };
     
     // 初期配置で衝突チェック（ゲームオーバー判定）
@@ -376,7 +395,7 @@ function generateNewPuyo() {
         return; 
     }
 
-    // 次のネクストを補充
+    // 次のネクストを補充（リストのサイズを MAX_NEXT_PUYOS に保つ）
     nextPuyoColors.push(getRandomPair());
 }
 
@@ -437,11 +456,6 @@ function getGhostFinalPositions() {
     
     const finalCoordsBeforeGravity = getCoordsFromState(tempPuyo);
     const puyoColors = [tempPuyo.mainColor, tempPuyo.subColor];
-    
-    // **重要**: ここでゴーストぷよの座標 (fixedCoords) が決定されるが、
-    // ちぎりが発生したときのために、以下の重力シミュレーションが必要。
-
-    // 以下の処理は、ちぎり位置（ゴーストぷよの最終位置）を正確に計算するためのもの
     
     // 1. ゴースト位置に仮配置する (シミュレーション用)
     finalCoordsBeforeGravity.forEach(p => {
@@ -765,7 +779,7 @@ function renderBoard() {
 }
 
 /**
- * プレイモードのネクスト描画 (メイン=下, サブ=上になるよう描画順を調整)
+ * プレイモードのネクスト描画
  */
 function renderPlayNextPuyo() {
     const next1Element = document.getElementById('next-puyo-1');
@@ -783,12 +797,10 @@ function renderPlayNextPuyo() {
     
     slots.forEach((slot, index) => {
         slot.innerHTML = '';
+        // nextPuyoColorsは50組あるが、プレイモードでは先頭2組のみ表示
         if (nextPuyoColors.length > index) {
             // nextPuyoColors[i] は [メインの色(c_main, 0), サブの色(c_sub, 1)]
             const [c_main, c_sub] = nextPuyoColors[index]; 
-            
-            // サブぷよ(c_sub)を先に、メインぷよ(c_main)を後に追加し、
-            // CSSによって c_main が視覚的に下、c_sub が上になるようにする。
             
             slot.appendChild(createPuyo(c_sub)); // 上のぷよ (サブ)
             slot.appendChild(createPuyo(c_main)); // 下のぷよ (メイン)
@@ -797,12 +809,21 @@ function renderPlayNextPuyo() {
 }
 
 /**
- * エディットモードのネクスト描画 (メイン=下, サブ=上になるよう描画順を調整)
+ * エディットモードのネクスト描画 (50手先までリスト表示)
  */
 function renderEditNextPuyos() {
-    const slots = [document.getElementById('edit-next-1'), document.getElementById('edit-next-2')];
-    
-    const createPuyo = (color, listIndex, puyoIndex) => {
+    const listContainer = document.getElementById('edit-next-list-container');
+    const visibleSlots = [
+        document.getElementById('edit-next-1'), 
+        document.getElementById('edit-next-2')
+    ];
+
+    if (!listContainer || !visibleSlots[0] || !visibleSlots[1]) return;
+
+    /**
+     * クリックで編集可能なぷよ要素を作成するヘルパー関数
+     */
+    const createEditablePuyo = (color, listIndex, puyoIndex) => {
         let puyo = document.createElement('div');
         puyo.className = `puyo puyo-${color}`;
         
@@ -819,21 +840,46 @@ function renderEditNextPuyos() {
         
         return puyo;
     };
-    
-    slots.forEach((slot, listIndex) => { 
-        if (!slot) return;
+
+
+    // --- 1. 現在のNEXT 1, NEXT 2 の描画 (リストの先頭 2つ) ---
+    visibleSlots.forEach((slot, index) => {
         slot.innerHTML = '';
-        if (editingNextPuyos.length > listIndex) {
-            // [c_main (0), c_sub (1)] の形式
-            const [c_main, c_sub] = editingNextPuyos[listIndex];
+        if (editingNextPuyos.length > index) {
+            const [c_main, c_sub] = editingNextPuyos[index];
             
-            // サブぷよ(c_sub)を先に、メインぷよ(c_main)を後に追加し、
-            // CSSによって c_main が視覚的に下、c_sub が上になるようにする。
-            
-            slot.appendChild(createPuyo(c_sub, listIndex, 1)); // 上のぷよ (サブ)
-            slot.appendChild(createPuyo(c_main, listIndex, 0)); // 下のぷよ (メイン)
+            slot.appendChild(createEditablePuyo(c_sub, index, 1)); // 上のぷよ (サブ)
+            slot.appendChild(createEditablePuyo(c_main, index, 0)); // 下のぷよ (メイン)
         }
     });
+
+    // --- 2. 50手先までのリストの描画 ---
+    listContainer.innerHTML = '';
+    
+    // NEXT 3 以降 (index 2 から MAX_NEXT_PUYOS - 1 まで)
+    for (let i = NUM_VISIBLE_NEXT_PUYOS; i < MAX_NEXT_PUYOS; i++) {
+        if (editingNextPuyos.length <= i) break;
+
+        const pairContainer = document.createElement('div');
+        pairContainer.className = 'next-puyo-slot-pair';
+
+        // 手数 (例: N3, N4...)
+        const countSpan = document.createElement('span');
+        countSpan.textContent = `N${i + 1}`;
+        pairContainer.appendChild(countSpan);
+        
+        // ぷよの行
+        const puyoRow = document.createElement('div');
+        puyoRow.className = 'next-puyo-row';
+        
+        const [c_main, c_sub] = editingNextPuyos[i];
+        
+        puyoRow.appendChild(createEditablePuyo(c_sub, i, 1)); // 上のぷよ (サブ)
+        puyoRow.appendChild(createEditablePuyo(c_main, i, 0)); // 下のぷよ (メイン)
+
+        pairContainer.appendChild(puyoRow);
+        listContainer.appendChild(pairContainer);
+    }
 }
 
 
@@ -880,6 +926,6 @@ function handleInput(event) {
 // ゲーム開始
 document.addEventListener('DOMContentLoaded', () => {
     initializeGame();
-    // ★修正: resizeイベントのリスナーを追加し、モバイル表示を再チェック
+    // resizeイベントのリスナーを追加し、モバイル表示を再チェック
     window.addEventListener('resize', checkMobileControlsVisibility);
 });
