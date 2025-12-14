@@ -5,7 +5,6 @@
 // 盤面サイズ
 const WIDTH = 6;
 const HEIGHT = 14; // 可視領域12 + 隠し領域2 (Y=0 から Y=13)
-// ★修正: NEXT ぷよの最大数を 50 組に変更
 const MAX_NEXT_PUYOS = 50; 
 const NUM_VISIBLE_NEXT_PUYOS = 2; // プレイ画面に表示する NEXT の数 (NEXT 1とNEXT 2)
 
@@ -34,12 +33,16 @@ const BONUS_TABLE = {
 
 let board = []; 
 let currentPuyo = null; 
-let nextPuyoColors = []; // [ [c1, c2], [c3, c4], ... ] の形式でNEXT 50組を保持
+let nextPuyoColors = []; 
 let score = 0;
 let chainCount = 0;
 let gameState = 'playing'; // 'playing', 'chaining', 'gameover', 'editing'
 let currentEditColor = COLORS.EMPTY; // エディットモードで選択中の色 (デフォルトは消しゴム: 0)
 let editingNextPuyos = []; // エディットモードで使用するNEXT 50組
+
+// ★追加: 履歴管理用スタック
+let historyStack = []; // 過去の状態を保存 (Undo用)
+let redoStack = [];    // 戻した状態を保存 (Redo用)
 
 
 // --- 落下ループのための変数 ---
@@ -107,23 +110,26 @@ function initializeGame() {
     score = 0;
     chainCount = 0;
     gameState = 'playing';
+    
+    // ★追加: 履歴スタックをクリア
+    historyStack = []; 
+    redoStack = [];
 
-    // ★修正: ネクストぷよリストを MAX_NEXT_PUYOS (50組) で初期化
+    // ネクストぷよリストを MAX_NEXT_PUYOS (50組) で初期化
     nextPuyoColors = [];
     for (let i = 0; i < MAX_NEXT_PUYOS; i++) {
         nextPuyoColors.push(getRandomPair());
     }
     // エディット用のネクストリストも初期化
     editingNextPuyos = JSON.parse(JSON.stringify(nextPuyoColors));
-    currentEditColor = COLORS.EMPTY; // エディットモードの初期色をリセット
+    currentEditColor = COLORS.EMPTY; 
 
     // UIリセット
-    const modeToggleButton = document.getElementById('mode-toggle-button');
+    const modeToggleButton = document.querySelector('.mode-toggle-btn');
     if (modeToggleButton) modeToggleButton.textContent = 'edit';
     const infoPanel = document.getElementById('info-panel');
     if (infoPanel) infoPanel.classList.remove('edit-mode-active');
     
-    // 自動落下ボタンの初期化
     const autoDropButton = document.getElementById('auto-drop-toggle-button');
     if (autoDropButton) {
         if (autoDropEnabled) {
@@ -145,6 +151,19 @@ function initializeGame() {
     if (!document.initializedKeyHandler) {
         document.addEventListener('keydown', handleInput);
         
+        // ★追加: Undo/Redoのキーバインド
+        document.addEventListener('keydown', (event) => {
+            if (gameState === 'playing') {
+                if ((event.key === 'z' || event.key === 'Z') && !event.shiftKey) {
+                    event.preventDefault(); // ブラウザの戻るを防止
+                    undoMove();
+                } else if (event.key === 'y' || event.key === 'Y' || (event.key === 'z' || event.key === 'Z') && event.shiftKey) {
+                    event.preventDefault(); // ブラウザの戻るを防止
+                    redoMove();
+                }
+            }
+        });
+
         // モバイル操作ボタンのイベント設定
         const btnLeft = document.getElementById('btn-left');
         const btnRight = document.getElementById('btn-right');
@@ -164,6 +183,9 @@ function initializeGame() {
     
     checkMobileControlsVisibility();
     renderBoard();
+    
+    // ★追加: 最初の状態を履歴スタックに保存 (最初の操作ぷよが生成された状態)
+    saveState(false); 
 }
 
 /**
@@ -179,7 +201,7 @@ window.resetGame = function() {
  */
 window.toggleMode = function() {
     const infoPanel = document.getElementById('info-panel');
-    const modeToggleButton = document.getElementById('mode-toggle-button');
+    const modeToggleButton = document.querySelector('.mode-toggle-btn');
     const boardElement = document.getElementById('puyo-board');
     
     if (gameState === 'playing' || gameState === 'gameover') {
@@ -187,7 +209,7 @@ window.toggleMode = function() {
         clearInterval(dropTimer); 
         gameState = 'editing';
         infoPanel.classList.add('edit-mode-active');
-        document.body.classList.add('edit-mode-active'); // bodyにもクラスを追加
+        document.body.classList.add('edit-mode-active'); 
         
         if (modeToggleButton) modeToggleButton.textContent = 'play';
         
@@ -195,7 +217,6 @@ window.toggleMode = function() {
         
         boardElement.addEventListener('click', handleBoardClickEditMode);
         
-        // 消しゴム (COLORS.EMPTY = 0) を初期選択色にする
         selectPaletteColor(COLORS.EMPTY); 
         renderEditNextPuyos(); 
         renderBoard(); 
@@ -204,7 +225,7 @@ window.toggleMode = function() {
         // -> プレイモードへ切り替え
         gameState = 'playing';
         infoPanel.classList.remove('edit-mode-active');
-        document.body.classList.remove('edit-mode-active'); // bodyからクラスを削除
+        document.body.classList.remove('edit-mode-active'); 
         
         if (modeToggleButton) modeToggleButton.textContent = 'edit';
         
@@ -222,7 +243,117 @@ window.toggleMode = function() {
         generateNewPuyo(); 
         startPuyoDropLoop(); 
         
+        // エディットモード後の最初の状態を履歴に保存
+        saveState();
+        
         renderBoard();
+    }
+}
+
+
+// --- 履歴管理関数 ---
+
+/**
+ * 現在のゲーム状態を保存し、履歴スタックに追加する
+ * (ぷよが固定され、連鎖に入る直前、またはゲーム開始時に呼ばれる)
+ * @param {boolean} clearRedoStack - 新しい手を打った場合、Redoスタックをクリアする
+ */
+function saveState(clearRedoStack = true) {
+    // ぷよ固定前の状態を保存
+    const state = {
+        board: board.map(row => [...row]),
+        nextPuyoColors: nextPuyoColors.map(pair => [...pair]),
+        score: score,
+        chainCount: chainCount,
+        currentPuyo: currentPuyo ? { 
+            mainColor: currentPuyo.mainColor,
+            subColor: currentPuyo.subColor,
+            mainX: currentPuyo.mainX, 
+            mainY: currentPuyo.mainY, 
+            rotation: currentPuyo.rotation
+        } : null
+    };
+
+    historyStack.push(state);
+
+    // 新しい手を打った場合 (Undo/Redo以外)、Redoスタックはクリア
+    if (clearRedoStack) {
+        redoStack = [];
+    }
+    updateHistoryButtons();
+}
+
+/**
+ * 指定された状態にゲームを復元する
+ * @param {object} state - 復元する状態オブジェクト
+ */
+function restoreState(state) {
+    if (!state) return;
+
+    board = state.board.map(row => [...row]);
+    nextPuyoColors = state.nextPuyoColors.map(pair => [...pair]);
+    score = state.score;
+    chainCount = state.chainCount;
+    
+    currentPuyo = state.currentPuyo; 
+    
+    gameState = 'playing';
+    clearInterval(dropTimer);
+    startPuyoDropLoop();
+
+    updateUI();
+    renderBoard();
+}
+
+/**
+ * 一手戻す (Undo)
+ */
+window.undoMove = function() {
+    if (gameState !== 'playing' && gameState !== 'chaining') return; 
+    if (historyStack.length <= 1) return; 
+
+    // 1. 現在の状態をRedoスタックにプッシュ
+    const currentState = historyStack.pop(); 
+    redoStack.push(currentState);
+
+    // 2. 過去の状態を復元
+    const previousState = historyStack[historyStack.length - 1]; 
+    restoreState(previousState);
+
+    updateHistoryButtons();
+}
+
+/**
+ * 一手やり直す (Redo)
+ */
+window.redoMove = function() {
+    if (gameState !== 'playing' && gameState !== 'chaining') return; 
+    if (redoStack.length === 0) return;
+
+    // 1. Redoスタックから状態を取り出し
+    const nextState = redoStack.pop();
+    
+    // 2. 履歴スタックにプッシュし直す
+    historyStack.push(nextState); 
+
+    // 3. 状態を復元
+    restoreState(nextState);
+
+    updateHistoryButtons();
+}
+
+/**
+ * Undo/Redoボタンの有効/無効を更新
+ */
+function updateHistoryButtons() {
+    const undoButton = document.getElementById('undo-button');
+    const redoButton = document.getElementById('redo-button');
+
+    if (undoButton) {
+        undoButton.disabled = historyStack.length <= 1;
+    }
+    if (redoButton) {
+        redoButton.disabled = redoStack.length === 0;
     }
 }
 
@@ -231,7 +362,6 @@ window.toggleMode = function() {
 
 function startPuyoDropLoop() {
     if (dropTimer) clearInterval(dropTimer);
-    // autoDropEnabled が true の場合のみタイマーをセット
     if (gameState === 'playing' && autoDropEnabled) { 
         dropTimer = setInterval(dropPuyo, dropInterval);
     }
@@ -240,11 +370,9 @@ function startPuyoDropLoop() {
 function dropPuyo() {
     if (gameState !== 'playing' || !currentPuyo) return;
 
-    // 1マス下に移動を試行
     const moved = movePuyo(0, -1, undefined, true);
 
     if (!moved) {
-        // 移動できなかった場合、固定
         clearInterval(dropTimer);
         lockPuyo();
     }
@@ -258,19 +386,15 @@ window.toggleAutoDrop = function() {
     const button = document.getElementById('auto-drop-toggle-button');
     if (!button) return;
     
-    // 状態を反転
     autoDropEnabled = !autoDropEnabled;
 
     if (autoDropEnabled) {
-        // ONに戻す場合
         button.textContent = '自動落下: ON';
         button.classList.remove('disabled');
         if (gameState === 'playing') {
-             // プレイモードであれば、タイマーを再開
             startPuyoDropLoop();
         }
     } else {
-        // OFFにする場合
         button.textContent = '自動落下: OFF';
         button.classList.add('disabled');
         if (dropTimer) {
@@ -439,7 +563,6 @@ function getPuyoCoords() {
 function getGhostFinalPositions() {
     if (!currentPuyo || gameState !== 'playing') return [];
     
-    // 元のボードをコピー
     let tempBoard = board.map(row => [...row]);
 
     let tempPuyo = { ...currentPuyo };
@@ -464,7 +587,6 @@ function getGhostFinalPositions() {
                           ? tempPuyo.mainColor 
                           : tempPuyo.subColor;
             
-            // 操作ぷよが重力によって落ちてくる位置をシミュレーションボードに配置
             tempBoard[p.y][p.x] = color;
         }
     });
@@ -481,9 +603,9 @@ function getGhostFinalPositions() {
             const tempColor = tempBoard[y][x];
             const originalColor = board[y][x];
             
-            if (originalColor === COLORS.EMPTY && // 元々空の場所
-                puyoColors.includes(tempColor) && // 今回落下するぷよの色であること
-                puyoCount < 2) // 2個だけ探せばよい
+            if (originalColor === COLORS.EMPTY && 
+                puyoColors.includes(tempColor) && 
+                puyoCount < 2) 
             {
                 ghostPositions.push({ x: x, y: y, color: tempColor });
                 puyoCount++;
@@ -537,7 +659,6 @@ function movePuyo(dx, dy, newRotation, shouldRender = true) {
 function rotatePuyoCW() {
     if (gameState !== 'playing') return false;
     const newRotation = (currentPuyo.rotation + 1) % 4;
-    // 衝突チェック（通常、右、左の順）
     if (movePuyo(0, 0, newRotation)) return true; 
     if (movePuyo(1, 0, newRotation)) return true; 
     if (movePuyo(-1, 0, newRotation)) return true; 
@@ -547,7 +668,6 @@ function rotatePuyoCW() {
 function rotatePuyoCCW() {
     if (gameState !== 'playing') return false;
     const newRotation = (currentPuyo.rotation - 1 + 4) % 4;
-    // 衝突チェック（通常、右、左の順）
     if (movePuyo(0, 0, newRotation)) return true; 
     if (movePuyo(1, 0, newRotation)) return true; 
     if (movePuyo(-1, 0, newRotation)) return true; 
@@ -559,7 +679,6 @@ function hardDrop() {
 
     clearInterval(dropTimer); 
 
-    // 落下できる限り落下させる
     while (movePuyo(0, -1, undefined, false)); 
 
     renderBoard(); 
@@ -573,11 +692,11 @@ function lockPuyo() {
     const coords = getPuyoCoords();
     let isGameOver = false;
 
+    // 1. 盤面にぷよを固定
     for (const puyo of coords) {
         // 14列目 (Y=13, HEIGHT-1) に固定されたらゲームオーバー
         if (puyo.y >= HEIGHT - 1) { 
             isGameOver = true;
-            break;
         }
         if (puyo.y >= 0) {
             board[puyo.y][puyo.x] = puyo.color;
@@ -594,6 +713,11 @@ function lockPuyo() {
     }
     
     currentPuyo = null;
+    
+    // 2. ★履歴の保存（新しい手としてRedoスタックをクリア）
+    saveState(true); 
+    
+    // 3. 連鎖開始
     gameState = 'chaining';
     chainCount = 0;
     
@@ -642,16 +766,11 @@ function findConnectedPuyos() {
 
 /**
  * 消去されたぷよの座標リストに基づき、その周囲（上下左右1マス）のおじゃまぷよを消去する。
- * @param {Array<{x: number, y: number}>} erasedCoords - 連鎖で消えたぷよの座標リスト
- * @returns {number} 消去されたおじゃまぷよの数
  */
 function clearGarbagePuyos(erasedCoords) {
     let clearedGarbageCount = 0;
-    
-    // 消去対象のおじゃまぷよの座標を格納するSet
     const garbageToClear = new Set(); 
 
-    // 消去されたぷよ一つ一つについて処理
     erasedCoords.forEach(({ x, y }) => {
         // 上下左右1マスをチェック
         [[0, 1], [0, -1], [1, 0], [-1, 0]].forEach(([dx, dy]) => {
@@ -662,7 +781,6 @@ function clearGarbagePuyos(erasedCoords) {
             if (nx >= 0 && nx < WIDTH && ny >= 0 && ny < HEIGHT) {
                 // その位置がおじゃまぷよ(COLORS.GARBAGE: 5)かチェック
                 if (board[ny][nx] === COLORS.GARBAGE) {
-                    // おじゃまぷよを消去リストに追加 (Setを使うことで重複登録を避ける)
                     garbageToClear.add(`${nx}-${ny}`); 
                 }
             }
@@ -672,8 +790,6 @@ function clearGarbagePuyos(erasedCoords) {
     // 消去リストに基づき、盤面からおじゃまぷよを削除
     garbageToClear.forEach(coordKey => {
         const [nx, ny] = coordKey.split('-').map(Number);
-        
-        // 実際に消去する
         board[ny][nx] = COLORS.EMPTY;
         clearedGarbageCount++;
     });
@@ -718,10 +834,9 @@ async function runChain() {
         });
     });
 
-    // --- ★追加ロジック: おじゃまぷよの巻き込み消去 ★ ---
+    // --- おじゃまぷよの巻き込み消去を実行 ---
     clearGarbagePuyos(erasedCoords);
-    // ------------------------------------------------------
-
+    
     renderBoard(); 
     updateUI();
 
@@ -729,7 +844,6 @@ async function runChain() {
     await new Promise(resolve => setTimeout(resolve, 300));
 
     // フェーズ4: 次の連鎖へ（重力落下と再チェック）
-    // 巻き込みで空いた穴を埋めるために再度gravityが呼ばれ、runChainが再帰的に実行されます。
     runChain();
 }
 
@@ -792,7 +906,6 @@ function renderBoard() {
     const currentPuyoCoords = isPlaying ? getPuyoCoords() : [];
     const ghostPuyoCoords = isPlaying ? getGhostFinalPositions() : []; 
 
-    // 描画は全領域 (y=13 から y=0) を行う
     for (let y = HEIGHT - 1; y >= 0; y--) { 
         for (let x = 0; x < WIDTH; x++) {
             const cellElement = document.getElementById(`cell-${x}-${y}`);
@@ -813,7 +926,6 @@ function renderBoard() {
             else {
                 const puyoGhost = ghostPuyoCoords.find(p => p.x === x && p.y === y);
                 if (puyoGhost) {
-                    // ゴーストぷよのクラスを付与
                     cellColor = puyoGhost.color; 
                     puyoClasses = `puyo puyo-${cellColor} puyo-ghost`;
                 }
@@ -850,9 +962,7 @@ function renderPlayNextPuyo() {
     
     slots.forEach((slot, index) => {
         slot.innerHTML = '';
-        // nextPuyoColorsは50組あるが、プレイモードでは先頭2組のみ表示
         if (nextPuyoColors.length > index) {
-            // nextPuyoColors[i] は [メインの色(c_main, 0), サブの色(c_sub, 1)]
             const [c_main, c_sub] = nextPuyoColors[index]; 
             
             slot.appendChild(createPuyo(c_sub)); // 上のぷよ (サブ)
@@ -885,7 +995,6 @@ function renderEditNextPuyos() {
             if (gameState !== 'editing') return;
             
             if (editingNextPuyos.length > listIndex) {
-                // puyoIndex: 0=メイン(下), 1=サブ(上)
                 editingNextPuyos[listIndex][puyoIndex] = currentEditColor; 
                 renderEditNextPuyos(); 
             }
@@ -939,6 +1048,7 @@ function renderEditNextPuyos() {
 function updateUI() {
     document.getElementById('score').textContent = score;
     document.getElementById('chain-count').textContent = chainCount;
+    updateHistoryButtons(); // スコア等の更新時にボタンの状態も確認
 }
 
 // --- 入力処理 ---
@@ -955,7 +1065,10 @@ function handleInput(event) {
             break;
         case 'z':
         case 'Z':
-            rotatePuyoCW(); 
+            // Undo/Redoと衝突しないよう、キーバインドのif文で制御済みだが念のため
+            if (!event.shiftKey) {
+                 rotatePuyoCW(); 
+            }
             break;
         case 'x':
         case 'X':
@@ -964,7 +1077,6 @@ function handleInput(event) {
         case 'ArrowDown':
             clearInterval(dropTimer);
             movePuyo(0, -1); 
-            // 自動落下OFF時は、手動落下後はタイマーを再開しない
             if (autoDropEnabled) { 
                 startPuyoDropLoop(); 
             }
