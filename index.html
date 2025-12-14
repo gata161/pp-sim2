@@ -47,7 +47,12 @@
                         <span id="chain-count">0</span>
                     </div>
                 </div>
-
+                
+                <div id="history-controls" class="common-control">
+                    <button id="undo-button" onclick="undoMove()" disabled>一手戻す (Z)</button>
+                    <button id="redo-button" onclick="redoMove()" disabled>一手やり直す (Y)</button>
+                </div>
+                
                 <div id="play-controls" class="common-control">
                     <button id="auto-drop-toggle-button" onclick="toggleAutoDrop()">自動落下: ON</button>
                     <button id="reset-button-play" onclick="resetGame()">盤面リセット</button>
