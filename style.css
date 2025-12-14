@@ -284,25 +284,26 @@ body {
     flex-grow: 1; 
 }
 
-/* --- ★ 修正点1: パレットのレイアウトを2x3グリッドに変更 ★ --- */
+/* --- ★ 修正点1: パレットのレイアウトを2x3グリッドに変更 (HTML構造に合わせて修正) ★ --- */
 #color-palette {
     flex-grow: 1; 
-    display: grid;
-    /* 3列で表示 */
-    grid-template-columns: repeat(3, 1fr); 
-    gap: 8px; /* ぷよ間の隙間 */
+    /* #color-palette 自体は flex-direction: column のコンテナのままとする */
 }
-/* 既存の palette-row は flex-direction: row; を持つが、ここでは grid-template-columns が優先される */
+
+/* palette-row をグリッドコンテナにし、3列に強制配置する */
 .palette-row {
-    display: contents; /* 子要素をグリッドの直下に配置 */
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 8px; 
+    margin-top: 5px; 
+    justify-items: center; 
 }
 
 #color-palette .puyo {
     cursor: pointer;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
-    /* グリッドに合わせて幅・高さを調整 */
-    width: 100%; 
-    aspect-ratio: 1 / 1; /* 正方形を維持 */
+    width: 90%; 
+    aspect-ratio: 1 / 1; 
 }
 #color-palette .puyo.selected {
     box-shadow: 0 0 0 2px #fff, 0 0 4px 4px #ffc107; 
@@ -416,7 +417,8 @@ body {
     position: fixed; 
     bottom: 0; 
     left: 50%; /* 中央に配置 */
-    transform: translate(-50%, -10px); /* 中央寄せと、わずかに上へ移動 */
+    /* 中央寄せと、わずかに上へ移動 (10px 上に) */
+    transform: translate(-50%, -10px); 
     padding: 10px; 
     background-color: transparent; 
     box-sizing: border-box;
