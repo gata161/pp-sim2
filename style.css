@@ -190,7 +190,9 @@ body {
 
 
 /* --- 3. コントロールボタンのレイアウト --- */
-#play-controls, #edit-controls, #mode-toggle-container {
+#play-controls, #edit-controls, #mode-toggle-container,
+#history-controls /* ★追加: 履歴操作ボタンのコンテナ */
+{
     width: 100%; 
     display: flex;
     flex-direction: column; 
@@ -198,14 +200,35 @@ body {
     flex-shrink: 0;
 }
 
-#mode-toggle-container {
-    margin-top: auto; 
-    order: 10;
+/* ★追加: UNDO/REDOボタンを横並びにする */
+#history-controls {
+    flex-direction: row; 
+    gap: 5px; 
+    margin-bottom: 5px; 
 }
+
+#undo-button, #redo-button {
+    flex-grow: 1; /* 幅を均等にする */
+    padding: 8px 5px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: white;
+    background-color: #f4a261; /* オレンジ系 */
+}
+
+#undo-button:disabled, #redo-button:disabled {
+    background-color: #555;
+    color: #bbb;
+    cursor: default;
+}
+
 
 /* モード切り替えとリセットボタンのスタイル共通 */
 #mode-toggle-button, #reset-button-play, #reset-button-edit, #auto-drop-toggle-button,
-.mode-toggle-btn /* ★修正: 新しいクラスを追加 */
+.mode-toggle-btn
 {
     width: 100%;
     padding: 10px 10px;
