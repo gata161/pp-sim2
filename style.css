@@ -287,7 +287,6 @@ body {
 /* --- ★ 修正点1: パレットのレイアウトを2x3グリッドに変更 (HTML構造に合わせて修正) ★ --- */
 #color-palette {
     flex-grow: 1; 
-    /* display: grid を削除し、もとの flex-direction: column の Info-box の中にあるとする */
 }
 
 /* HTMLの .palette-row ごとに3列に並べる */
@@ -298,8 +297,6 @@ body {
     margin-top: 5px; 
     justify-items: center; /* グリッドアイテムを中央に */
 }
-/* 2つ目の palette-row が始まる前に、タイトル後の最初の palette-row のマージンを調整したいが、
-   ここでは palette-row が Info-box の中にあるため、margin-top: 5px で対応 */
 
 #color-palette .puyo {
     cursor: pointer;
@@ -415,8 +412,6 @@ body {
     flex-direction: row; 
     justify-content: space-between; 
     gap: 10px; 
-    
-    /* position: fixed を削除 */
 }
 #mobile-controls.visible {
     display: flex;
