@@ -296,7 +296,7 @@ function restoreState(state) {
     score = state.score;
     chainCount = state.chainCount;
     
-    // ★修正されたロジック: currentPuyoを過去の状態に正確に復元する
+    // currentPuyoの復元
     if (state.currentPuyo) {
         currentPuyo = { ...state.currentPuyo };
     } else {
@@ -307,12 +307,14 @@ function restoreState(state) {
     gameState = 'playing';
     clearInterval(dropTimer);
     
-    // currentPuyoがnullの場合（つまり、ぷよを置いて次の手を打つ直前の状態）
-    // のみ、新しい操作ぷよを生成する。
+    // currentPuyoがnullの場合のみ、次の操作ぷよを生成する。
     if (currentPuyo === null) {
         generateNewPuyo(); 
     }
     
+    // ★修正ポイント: 盤面が復元された後、重力処理を実行して浮きぷよを落下させる
+    gravity(); 
+
     startPuyoDropLoop();
 
     updateUI();
