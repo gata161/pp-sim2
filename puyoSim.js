@@ -251,6 +251,136 @@ window.toggleMode = function() {
 }
 
 
+// --- ステージコード化/復元機能 ---
+
+/**
+ * 現在の盤面とネクストリストをコード化してBase64文字列として返す。
+ * * 盤面: 6列 * 14行 = 84個のぷよ (0~5 = 3ビットで表現)
+ * ネクスト: 50組 * 2色 = 100個のぷよ (0~5 = 3ビットで表現)
+ * 合計: 84 + 100 = 184個のぷよデータ。 184 * 3ビット = 552ビット。
+ * 552 / 8 = 69バイト。 Base64で約92文字。
+ */
+window.copyStageCode = function() {
+    if (gameState !== 'editing') {
+        alert("ステージコード化はエディットモードでのみ実行できます。");
+        return;
+    }
+
+    // 1. データを1次元配列に収集 (盤面 + ネクスト)
+    let dataArray = [];
+
+    // 盤面データ (Y=0 から Y=13, X=0 から X=5 の順で収集)
+    for (let y = 0; y < HEIGHT; y++) {
+        for (let x = 0; x < WIDTH; x++) {
+            dataArray.push(board[y][x]);
+        }
+    }
+    
+    // ネクストデータ (50組 x 2色: [メイン, サブ], [メイン, サブ], ...) の順
+    editingNextPuyos.forEach(pair => {
+        dataArray.push(pair[0]); // メイン (下)
+        dataArray.push(pair[1]); // サブ (上)
+    });
+
+    // 2. データをバイナリ文字列に変換 (各ぷよの色を3ビットで表現)
+    let binaryString = "";
+    dataArray.forEach(color => {
+        // 0-5 の値を 000-101 の3桁バイナリ文字列に変換
+        binaryString += color.toString(2).padStart(3, '0');
+    });
+
+    // 3. バイナリ文字列をバイト配列 (8ビット単位) に変換
+    let byteString = "";
+    for (let i = 0; i < binaryString.length; i += 8) {
+        const byte = binaryString.substring(i, i + 8);
+        byteString += String.fromCharCode(parseInt(byte, 2));
+    }
+    
+    // 4. バイト文字列を Base64 にエンコード
+    const stageCode = btoa(byteString);
+
+    // 5. テキストエリアに表示し、クリップボードにコピー
+    const codeInput = document.getElementById('stage-code-input');
+    if (codeInput) {
+        codeInput.value = stageCode;
+        codeInput.select();
+        document.execCommand('copy');
+        alert('現在のステージコードをクリップボードにコピーしました！');
+    }
+}
+
+/**
+ * ステージコードを読み込み、盤面とネクストリストを復元する。
+ */
+window.loadStageCode = function() {
+    if (gameState !== 'editing') {
+        alert("ステージコードの読み込みはエディットモードでのみ実行できます。");
+        return;
+    }
+
+    const codeInput = document.getElementById('stage-code-input');
+    const stageCode = codeInput ? codeInput.value.trim() : "";
+
+    if (!stageCode) {
+        alert("ステージコードが入力されていません。");
+        return;
+    }
+
+    try {
+        // 1. Base64をデコードしてバイト文字列に戻す
+        const byteString = atob(stageCode);
+
+        // 2. バイト文字列をバイナリ文字列に変換
+        let binaryString = "";
+        for (let i = 0; i < byteString.length; i++) {
+            binaryString += byteString.charCodeAt(i).toString(2).padStart(8, '0');
+        }
+
+        // 3. バイナリ文字列を3ビットずつ区切り、色データに復元
+        let dataArray = [];
+        for (let i = 0; i < binaryString.length; i += 3) {
+            const colorBinary = binaryString.substring(i, i + 3);
+            if (colorBinary.length === 3) {
+                const color = parseInt(colorBinary, 2);
+                dataArray.push(color);
+            }
+        }
+        
+        // 期待されるデータ長: 盤面84 + ネクスト100 = 184
+        if (dataArray.length < 184) {
+             throw new Error("データが不足しています。");
+        }
+        
+        // 4. データ配列から盤面とネクストに割り当て
+        let dataIndex = 0;
+        
+        // 盤面復元
+        for (let y = 0; y < HEIGHT; y++) {
+            for (let x = 0; x < WIDTH; x++) {
+                board[y][x] = dataArray[dataIndex++];
+            }
+        }
+        
+        // ネクスト復元
+        editingNextPuyos = [];
+        for (let i = 0; i < MAX_NEXT_PUYOS; i++) {
+            const mainColor = dataArray[dataIndex++];
+            const subColor = dataArray[dataIndex++];
+            editingNextPuyos.push([mainColor, subColor]);
+        }
+        
+        // 5. UIを更新
+        renderBoard();
+        renderEditNextPuyos();
+        
+        alert('ステージコードを正常に読み込みました。');
+
+    } catch (e) {
+        console.error("ステージコードの復元中にエラーが発生しました:", e);
+        alert('ステージコードが無効です。形式を確認してください。');
+    }
+}
+
 // --- 履歴管理関数 ---
 
 /**
