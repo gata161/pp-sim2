@@ -312,10 +312,21 @@ function restoreState(state) {
         generateNewPuyo(); 
     }
     
-    // ★修正ポイント: 盤面が復元された後、重力処理を実行して浮きぷよを落下させる
+    // 盤面が復元された後、重力処理を実行して浮きぷよを落下させる
     gravity(); 
 
-    startPuyoDropLoop();
+    // 状態復元後、現在の盤面に消えるべきぷよがあるかチェックする
+    const groups = findConnectedPuyos();
+
+    if (groups.length > 0) {
+        // 消えるぷよがあれば、連鎖フェーズへ移行し、連鎖処理を開始
+        gameState = 'chaining';
+        chainCount = 0; // 新しい連鎖の開始
+        runChain();
+    } else {
+        // 消えるぷよがなければ、落下ループを再開
+        startPuyoDropLoop();
+    }
 
     updateUI();
     renderBoard();
