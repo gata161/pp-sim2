@@ -287,21 +287,24 @@ body {
 /* --- ★ 修正点1: パレットのレイアウトを2x3グリッドに変更 (HTML構造に合わせて修正) ★ --- */
 #color-palette {
     flex-grow: 1; 
-    /* #color-palette 自体は flex-direction: column のコンテナのままとする */
+    /* display: grid を削除し、もとの flex-direction: column の Info-box の中にあるとする */
 }
 
-/* palette-row をグリッドコンテナにし、3列に強制配置する */
+/* HTMLの .palette-row ごとに3列に並べる */
 .palette-row {
     display: grid;
-    grid-template-columns: repeat(3, 1fr); 
+    grid-template-columns: repeat(3, 1fr); /* 3列に均等分割 */
     gap: 8px; 
     margin-top: 5px; 
-    justify-items: center; 
+    justify-items: center; /* グリッドアイテムを中央に */
 }
+/* 2つ目の palette-row が始まる前に、タイトル後の最初の palette-row のマージンを調整したいが、
+   ここでは palette-row が Info-box の中にあるため、margin-top: 5px で対応 */
 
 #color-palette .puyo {
     cursor: pointer;
     box-shadow: 0 0 5px rgba(0,0,0,0.5);
+    /* グリッドセル内で正方形を維持 */
     width: 90%; 
     aspect-ratio: 1 / 1; 
 }
@@ -403,7 +406,7 @@ body {
     cursor: pointer;
 }
 
-/* --- ★ 修正点2: モバイル操作ボタンの位置調整 ★ --- */
+/* --- ★ 修正点2: モバイル操作ボタン (position: fixed を削除してフローに戻す) ★ --- */
 #mobile-controls {
     display: none; 
     margin-top: 10px;
@@ -413,17 +416,8 @@ body {
     justify-content: space-between; 
     gap: 10px; 
     
-    /* 画面下部に固定 */
-    position: fixed; 
-    bottom: 0; 
-    left: 50%; /* 中央に配置 */
-    /* 中央寄せと、わずかに上へ移動 (10px 上に) */
-    transform: translate(-50%, -10px); 
-    padding: 10px; 
-    background-color: transparent; 
-    box-sizing: border-box;
+    /* position: fixed を削除 */
 }
-
 #mobile-controls.visible {
     display: flex;
 }
