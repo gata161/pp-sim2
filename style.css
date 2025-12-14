@@ -204,7 +204,9 @@ body {
 }
 
 /* モード切り替えとリセットボタンのスタイル共通 */
-#mode-toggle-button, #reset-button-play, #reset-button-edit, #auto-drop-toggle-button {
+#mode-toggle-button, #reset-button-play, #reset-button-edit, #auto-drop-toggle-button,
+.mode-toggle-btn /* ★修正: 新しいクラスを追加 */
+{
     width: 100%;
     padding: 10px 10px;
     border: none;
@@ -215,8 +217,9 @@ body {
     text-transform: uppercase; 
 }
 
-#mode-toggle-button {
-    background-color: #457b9d; 
+/* ★修正: モード切り替えボタンのスタイルを統一 */
+.mode-toggle-btn {
+    background-color: #457b9d; /* 青系の色 */
     color: white;
 }
 
